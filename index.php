@@ -208,24 +208,24 @@ $username = $_SESSION['username'] ?? 'Guest';
 </head>
 <body>
     <div class="demo-header">
-      <h1>📅 Welcome, <?php echo htmlspecialchars($username); ?>!</h1>
+        <h1>📅 Hello, <?php echo htmlspecialchars($username); ?>!</h1>
+        <p>Welcome back to your personal calendar dashboard.</p>
+        <p>Stay organized and on track — here's what’s happening today:</p>
     </div>
-   
 
-    <?php if ($isLoggedIn): ?>
-        <a href="logout.php">🚪 Logout</a>
-    <?php else: ?>
-        <a href="login.php">🔐 Login</a>
-    <?php endif; ?>
+    <div class="user-actions">
+        <?php if ($isLoggedIn): ?>
+            <a href="logout.php">🚪 Logout</a>
+        <?php else: ?>
+            <a href="login.php">🔐 Login</a>
+        <?php endif; ?>
+    </div>
 
-    <div class="demo-explanation">
-        <h3>Improved Recurring Events System</h3>
-        <p>This demo shows how the recurring events will work:</p>
+    <div class="today-overview">
+        <h3>📌 Your Overview for Today</h3>
         <ul>
-            <li><strong>🔄 Recurring events</strong> are now marked with the 🔄 icon</li>
-            <li>When canceling a recurring event, you'll be asked if you want to cancel just that instance or all occurrences</li>
-            <li>When editing a recurring event, you can choose to edit just that instance or all occurrences</li>
-            <li>Modified instances of recurring events are tracked separately</li>
+            <li><strong>🕐 Pending Tasks:</strong> <span id="pending-tasks-count">0</span></li>
+            <li><strong>✅ Completed Tasks:</strong> <span id="completed-tasks-count">0</span></li>
         </ul>
     </div>
 
@@ -465,10 +465,31 @@ $username = $_SESSION['username'] ?? 'Guest';
             // Reset the form completely
             $('#addEventForm')[0].reset();
             
-            // Prefill start and end values in the modal
-            const format = (date) => date.format("YYYY-MM-DDTHH:mm");
-            $('input[name="start"]').val(format(start));
-            $('input[name="end"]').val(format(end));
+            // IMPROVED DATE HANDLING:
+            // Get the current view - needed to determine how to set default times
+            let view = $('#calendar').fullCalendar('getView');
+            
+            // Set default times based on the view and selection
+            let startTime, endTime;
+            
+            if (view.name === 'month') {
+                // In month view, set reasonable default times (9am - 10am)
+                startTime = start.clone().hour(9).minute(0);
+                endTime = start.clone().hour(10).minute(0);
+            } else {
+                // In week or day view, use the exact time selection
+                startTime = start.clone();
+                endTime = end.clone();
+            }
+            
+            // Format dates for datetime-local inputs (YYYY-MM-DDTHH:MM)
+            const formatDatetimeLocal = function(momentDate) {
+                return momentDate.format("YYYY-MM-DD") + "T" + momentDate.format("HH:mm");
+            };
+            
+            // Set the values to the form fields
+            $('input[name="start"]').val(formatDatetimeLocal(startTime));
+            $('input[name="end"]').val(formatDatetimeLocal(endTime));
 
             // Set the modal to "Add Event" state
             $('#modalTitle').text('Add Event');
@@ -479,6 +500,10 @@ $username = $_SESSION['username'] ?? 'Guest';
             $('input[name="title"]').val('');
             $('select[name="repeat_type"]').val('none');
             $('textarea[name="description"]').val('');
+            $('input[name="location"]').val('');
+            $('select[name="status"]').val('pending');
+            $('input[name="color"]').val('#3788d8');
+            $('select[name="reminder"]').val('15');
             
             // Update color preview
             updateColorPreview();
@@ -498,8 +523,123 @@ $username = $_SESSION['username'] ?? 'Guest';
             // Store the full event data
             $('#displayEventModal').data('currentEvent', event);
             openDisplayModal(event);
+        },
+        
+        // ADD THIS: Handle event drag and drop
+        eventDrop: function(event, delta, revertFunc) {
+            if (!isLoggedIn) {
+                alert("Please log in to update events.");
+                revertFunc();
+                return;
+            }
+            
+            // Format dates as needed for the database
+            const startStr = event.start.format("YYYY-MM-DD HH:mm:ss");
+            const endStr = event.end ? event.end.format("YYYY-MM-DD HH:mm:ss") : event.start.clone().add(1, 'hour').format("YYYY-MM-DD HH:mm:ss");
+            
+            // Handle recurring events differently
+            let eventId = event.id;
+            let updateData = {
+                event_id: eventId,
+                title: event.title,
+                start: startStr,
+                end: endStr,
+                description: event.description || '',
+                repeat_type: event.repeat_type || 'none',
+                status: event.status || 'pending',
+                color: event.color || '#3788d8',
+                location: event.location || '',
+                reminder: event.reminder || '15'
+            };
+            
+            // Determine if this is a recurring event instance
+            let updateUrl = 'calendar/update_event.php';
+            if (event.is_recurring && event.start.format('YYYY-MM-DD') !== event.original_start) {
+                updateUrl = 'calendar/update_instance.php';
+                updateData.instance_date = event.original_start;
+            }
+            
+            $.ajax({
+                url: updateUrl,
+                type: 'POST',
+                data: updateData,
+                success: function(response) {
+                    showNotification('Event updated successfully!');
+                    
+                    // Refresh the calendar to ensure consistency
+                    $('#calendar').fullCalendar('refetchEvents');
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error updating event:", error);
+                    alert("Error updating event. Changes reverted.");
+                    revertFunc();
+                }
+            });
+        },
+        
+        // ADD THIS: Handle event resize
+        eventResize: function(event, delta, revertFunc) {
+            if (!isLoggedIn) {
+                alert("Please log in to update events.");
+                revertFunc();
+                return;
+            }
+            
+            // Format dates as needed for the database
+            const startStr = event.start.format("YYYY-MM-DD HH:mm:ss");
+            const endStr = event.end.format("YYYY-MM-DD HH:mm:ss");
+            
+            // Similar to eventDrop, send the updated data to server
+            let eventId = event.id;
+            let updateData = {
+                event_id: eventId,
+                title: event.title,
+                start: startStr,
+                end: endStr,
+                description: event.description || '',
+                repeat_type: event.repeat_type || 'none',
+                status: event.status || 'pending',
+                color: event.color || '#3788d8',
+                location: event.location || '',
+                reminder: event.reminder || '15'
+            };
+            
+            // Determine if this is a recurring event instance
+            let updateUrl = 'calendar/update_event.php';
+            if (event.is_recurring && event.start.format('YYYY-MM-DD') !== event.original_start) {
+                updateUrl = 'calendar/update_instance.php';
+                updateData.instance_date = event.original_start;
+            }
+            
+            $.ajax({
+                url: updateUrl,
+                type: 'POST',
+                data: updateData,
+                success: function(response) {
+                    showNotification('Event updated successfully!');
+                    
+                    // Refresh the calendar to ensure consistency
+                    $('#calendar').fullCalendar('refetchEvents');
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error updating event:", error);
+                    alert("Error updating event. Changes reverted.");
+                    revertFunc();
+                }
+            });
         }
     });
+    
+    // Add notification function
+    function showNotification(message) {
+        // Create notification element if it doesn't exist
+        if ($('#notification').length === 0) {
+            $('body').append('<div id="notification" style="display:none; position:fixed; bottom:20px; right:20px; background-color:#4CAF50; color:white; padding:15px; border-radius:5px; z-index:9999;"></div>');
+        }
+        
+        // Set message and display
+        $('#notification').text(message).fadeIn(300).delay(2000).fadeOut(500);
+    }
 });
 
     // Update the color preview based on selected color
@@ -693,90 +833,166 @@ $username = $_SESSION['username'] ?? 'Guest';
     }
 
     // Function to populate the edit form
-    function populateEditForm(event) {
-        // Populate the edit form
-        $('#modalTitle').text('Edit Event');
-        $('input[name="title"]').val(event.title || '');
+function populateEditForm(event) {
+    console.log("Original event data:", event); // Debug: log the original event object
+    
+    // Populate the edit form
+    $('#modalTitle').text('Edit Event');
+    $('input[name="title"]').val(event.title || '');
 
-        // Format dates properly for datetime-local inputs
-        function formatDateForInput(momentDate) {
-            if (!momentDate) return '';
-            // Format to YYYY-MM-DDTHH:MM
-            return momentDate.format("YYYY-MM-DDTHH:mm");
-        }
-
-        // Use the helper function to set the values
-        $('input[name="start"]').val(formatDateForInput(event.start));
-        $('input[name="end"]').val(formatDateForInput(event.end));
-
-        $('select[name="repeat_type"]').val(event.repeat_type || 'none');
-        $('textarea[name="description"]').val(event.description || '');
-        $('select[name="status"]').val(event.status || 'pending');
-        $('input[name="color"]').val(event.color || '#3a87ad');
-        $('input[name="location"]').val(event.location || '');
-        $('select[name="reminder"]').val(event.reminder || '5');
-
-        $('#event_id').val(event.id || '');
-        $('#saveButton').text('Update');
+    // Format dates properly for datetime-local inputs
+    function formatDateForInput(date) {
+        if (!date) return '';
         
-        // Update color preview for the edit form
-        updateColorPreview();
-
-        // Switch modals
-        closeDisplayModal();
-        document.getElementById("addEventModal").style.display = "block";
-        document.getElementById("modalOverlay").style.display = "block";
+        console.log("Formatting date:", date); // Debug: log each date we're trying to format
+        
+        // First, ensure it's a string we can manipulate
+        let dateStr = date;
+        
+        // If it's a moment object, convert to ISO string
+        if (moment.isMoment(date)) {
+            dateStr = date.format();
+        }
+        // If it's a Date object, convert to ISO string
+        else if (date instanceof Date) {
+            dateStr = date.toISOString();
+        }
+        
+        // Explicitly replace 'P' with 'T' if it exists
+        if (typeof dateStr === 'string' && dateStr.includes('P')) {
+            dateStr = dateStr.replace('P', 'T');
+        }
+        
+        // Create a new moment object from our cleaned string
+        const momentDate = moment(dateStr);
+        
+        if (!momentDate.isValid()) {
+            console.error("Invalid date:", dateStr);
+            return '';
+        }
+        
+        // Format with explicit 'T' separator
+        return momentDate.format("YYYY-MM-DDTHH:mm");
     }
 
-    // Handle form submission for adding/updating event
-    $('#addEventForm').on('submit', function(e) {
-        e.preventDefault();
-        var formData = $(this).serialize();
-        var eventId = $('#event_id').val();
-        
-        // Check if we have a stored recurring edit mode
-        var event = $('#displayEventModal').data('currentEvent');
-        var recurringEditMode = event && event.recurringEditMode;
-        
-        // If this is a recurring event edit
-        if (eventId && eventId.indexOf(':') !== -1) {
-            // Add update mode to form data
-            formData += '&update_mode=' + (recurringEditMode || 'this');
-            
-            $.ajax({
-                url: 'calendar/update_instance.php',
-                type: 'POST',
-                data: formData,
-                success: function(response) {
-                    alert(response);
-                    $('#calendar').fullCalendar('refetchEvents');
-                    closeModal();
-                    $('#addEventForm')[0].reset();
-                },
-                error: function() {
-                    alert("Something went wrong while saving the event.");
-                }
-            });
-        } else {
-            // Regular add/update
-            var url = eventId ? 'calendar/update_event.php' : 'calendar/add_event.php';
-            
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: formData,
-                success: function(response) {
-                    alert(response);
-                    $('#calendar').fullCalendar('refetchEvents');
-                    closeModal();
-                    $('#addEventForm')[0].reset();
-                },
-                error: function() {
-                    alert("Something went wrong while saving the event.");
-                }
-            });
+    // Debug: Check start and end dates before formatting
+    console.log("Start date before formatting:", event.start);
+    console.log("End date before formatting:", event.end);
+    
+    // Process start date
+    let formattedStart = formatDateForInput(event.start);
+    console.log("Formatted start:", formattedStart); // Debug
+    $('input[name="start"]').val(formattedStart);
+    
+    // Process end date
+    let formattedEnd = formatDateForInput(event.end);
+    console.log("Formatted end:", formattedEnd); // Debug
+    $('input[name="end"]').val(formattedEnd);
+
+    // As a fallback, directly fix the value if it still has a 'P'
+    setTimeout(() => {
+        const startField = $('input[name="start"]');
+        if (startField.val().includes('P')) {
+            startField.val(startField.val().replace('P', 'T'));
         }
-    });
+        
+        const endField = $('input[name="end"]');
+        if (endField.val().includes('P')) {
+            endField.val(endField.val().replace('P', 'T'));
+        }
+    }, 0);
+
+    $('select[name="repeat_type"]').val(event.repeat_type || 'none');
+    $('textarea[name="description"]').val(event.description || '');
+    $('select[name="status"]').val(event.status || 'pending');
+    $('input[name="color"]').val(event.color || '#3a87ad');
+    $('input[name="location"]').val(event.location || '');
+    $('select[name="reminder"]').val(event.reminder || '5');
+
+    $('#event_id').val(event.id || '');
+    $('#saveButton').text('Update');
+    
+    // Update color preview for the edit form
+    updateColorPreview();
+
+    // Switch modals
+    closeDisplayModal();
+    document.getElementById("addEventModal").style.display = "block";
+    document.getElementById("modalOverlay").style.display = "block";
+}
+
+   // Handle form submission for adding/updating event
+$('#addEventForm').on('submit', function(e) {
+    e.preventDefault();
+    var formData = $(this).serialize();
+    var eventId = $('#event_id').val();
+    
+    // Check if we have a stored recurring edit mode
+    var event = $('#displayEventModal').data('currentEvent');
+    var recurringEditMode = event && event.recurringEditMode;
+    
+    // Debug: Log what we're about to send
+    console.log("Submitting form with ID:", eventId);
+    console.log("Update mode:", recurringEditMode || 'this');
+    console.log("Form data:", formData);
+    
+    // If this is a recurring event edit
+    if (eventId && eventId.indexOf(':') !== -1) {
+        // Add update mode to form data
+        formData += '&update_mode=' + (recurringEditMode || 'this');
+        
+        $.ajax({
+            url: 'calendar/update_instance.php',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                alert(response);
+                $('#calendar').fullCalendar('refetchEvents');
+                closeModal();
+                $('#addEventForm')[0].reset();
+            },
+            error: function(xhr, status, error) {
+                // Improved error handling
+                console.error("AJAX Error:", status, error);
+                console.error("Server response:", xhr.responseText);
+                
+                // Display the actual error message if available
+                if (xhr.responseText) {
+                    alert("Server error: " + xhr.responseText);
+                } else {
+                    alert("Something went wrong while saving the event. Error: " + error);
+                }
+            }
+        });
+    } else {
+        // Regular add/update
+        var url = eventId ? 'calendar/update_event.php' : 'calendar/add_event.php';
+        
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                alert(response);
+                $('#calendar').fullCalendar('refetchEvents');
+                closeModal();
+                $('#addEventForm')[0].reset();
+            },
+            error: function(xhr, status, error) {
+                // Improved error handling
+                console.error("AJAX Error:", status, error);
+                console.error("Server response:", xhr.responseText);
+                
+                // Display the actual error message if available
+                if (xhr.responseText) {
+                    alert("Server error: " + xhr.responseText);
+                } else {
+                    alert("Something went wrong while saving the event. Error: " + error);
+                }
+            }
+        });
+    }
+});
     </script>
 </body>
 </html>
