@@ -1,0 +1,34 @@
+# To set up a cron job that runs every minute (for Linux servers):
+
+# 1. Open your crontab file for editing:
+crontab -e
+
+# 2. Add this line to run the check_reminders.php script every minute:
+* * * * * php /C/xampp/htdocs/calendar_system/calendar/check_reminders.php >> /C/xampp/htdocs/calendar_system/calendar/cron_log.txt 2>&1
+
+# 3. Save and exit the editor
+
+
+# Alternative (Recommended for Windows or if you don't have direct server access):
+# Use a web-based cron service.
+
+# Create a version of check_reminders.php that can be accessed via HTTP with a secret key:
+
+
+<?php
+// check_reminders_secure.php
+$secret_key = "calendar_secretkey"; // Change this to something secure
+
+if (!isset($_GET['key']) || $_GET['key'] !== $secret_key) {
+    header("HTTP/1.1 403 Forbidden");
+    echo "Access denied";
+    exit;
+}
+
+// Include the check_reminders code here
+require 'check_reminders.php';
+?>
+
+# Then set up a web-based cron service to call:
+# http://localhost/calendar_system/calendar/check_reminders_secure.php?key=calendar_secretkey
+# Every minute

@@ -2,7 +2,47 @@
 session_start();
 $isLoggedIn = isset($_SESSION['user_id']);
 $username = $_SESSION['username'] ?? 'Guest';
+
+// Initialize task counts
+$pendingCount = 0;
+$completedCount = 0;
+
+// Only query the database if the user is logged in
+if ($isLoggedIn) {
+    include('db.php'); // Include your database connection
+    
+    $userId = $_SESSION['user_id'];
+    $today = date('Y-m-d'); // Get today's date in YYYY-MM-DD format
+    
+    // Get pending tasks count for today
+    $pendingQuery = "SELECT COUNT(*) as count FROM events 
+                    WHERE status = 'pending' 
+                    AND user_id = ? 
+                    AND DATE(start) = ?";
+    $stmt = mysqli_prepare($conn, $pendingQuery);
+    mysqli_stmt_bind_param($stmt, "is", $userId, $today);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    if ($row = mysqli_fetch_assoc($result)) {
+        $pendingCount = $row['count'];
+    }
+    
+    // Get completed tasks count for today
+    $completedQuery = "SELECT COUNT(*) as count FROM events 
+                      WHERE status = 'completed' 
+                      AND user_id = ? 
+                      AND DATE(start) = ?";
+    $stmt = mysqli_prepare($conn, $completedQuery);
+    mysqli_stmt_bind_param($stmt, "is", $userId, $today);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    if ($row = mysqli_fetch_assoc($result)) {
+        $completedCount = $row['count'];
+    }
+}
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -219,21 +259,33 @@ $username = $_SESSION['username'] ?? 'Guest';
     <?php else: ?>
         <a href="login.php">🔐 Login</a>
     <?php endif; ?>
-</div>
-
-<button id="showNotificationsBtn">🔔 Notifications</button>
-<div id="notificationsPanel" style="display: none;">
-    <ul id="notificationList"></ul>
-</div>
 
 
-<div class="today-overview">
-    <h3>📌 Your Overview for Today</h3>
-    <ul>
-        <li><strong>🕐 Pending Tasks:</strong> <span id="pending-tasks-count">0</span></li>
-        <li><strong>✅ Completed Tasks:</strong> <span id="completed-tasks-count">0</span></li>
-    </ul>
+
+    <div class="today-overview">
+        <h3>📌 Your Overview for Today</h3>
+        <ul>
+            <li><strong>🕐 Pending Tasks:</strong> <span id="pending-tasks-count"><?php echo $pendingCount; ?></span></li>
+            <li><strong>✅ Completed Tasks:</strong> <span id="completed-tasks-count"><?php echo $completedCount; ?></span></li>
+        </ul>
+    </div>
+
+    <!-- Add this somewhere in your index.php if not already present -->
+    <div class="notifications-container">
+    <button id="showNotificationsBtn" class="notifications-button">🔔 Notifications</button>
+    <div id="notificationsPanel" class="notifications-panel">
+        <ul id="notificationList" class="notification-list">
+            <!-- Notifications will be loaded here -->
+        </ul>
+    </div>
 </div>
+<div class="export-cv-container">
+    <form action="export_schedule.php" method="post">
+        <button type="submit" class="export-cv-button">📄 Export Today's CV</button>
+    </form>
+</div>
+
+
 
     <div id="calendar"></div>
 
@@ -340,6 +392,10 @@ $username = $_SESSION['username'] ?? 'Guest';
 
     <!-- Modal overlay -->
     <div id="modalOverlay" class="modal-overlay"></div>
+
+
+
+    <script src="js/notifications.js"></script>
 
     <script>
         // Add notification function
