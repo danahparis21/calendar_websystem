@@ -207,27 +207,33 @@ $username = $_SESSION['username'] ?? 'Guest';
     </style>
 </head>
 <body>
-    <div class="demo-header">
-        <h1>📅 Hello, <?php echo htmlspecialchars($username); ?>!</h1>
-        <p>Welcome back to your personal calendar dashboard.</p>
-        <p>Stay organized and on track — here's what’s happening today:</p>
-    </div>
+<div class="demo-header">
+    <h1>📅 Hello, <?php echo htmlspecialchars($username); ?>!</h1>
+    <p>Welcome back to your personal calendar dashboard.</p>
+    <p>Stay organized and on track — here's what’s happening today:</p>
+</div>
 
-    <div class="user-actions">
-        <?php if ($isLoggedIn): ?>
-            <a href="logout.php">🚪 Logout</a>
-        <?php else: ?>
-            <a href="login.php">🔐 Login</a>
-        <?php endif; ?>
-    </div>
+<div class="user-actions">
+    <?php if ($isLoggedIn): ?>
+        <a href="logout.php">🚪 Logout</a>
+    <?php else: ?>
+        <a href="login.php">🔐 Login</a>
+    <?php endif; ?>
+</div>
 
-    <div class="today-overview">
-        <h3>📌 Your Overview for Today</h3>
-        <ul>
-            <li><strong>🕐 Pending Tasks:</strong> <span id="pending-tasks-count">0</span></li>
-            <li><strong>✅ Completed Tasks:</strong> <span id="completed-tasks-count">0</span></li>
-        </ul>
-    </div>
+<button id="showNotificationsBtn">🔔 Notifications</button>
+<div id="notificationsPanel" style="display: none;">
+    <ul id="notificationList"></ul>
+</div>
+
+
+<div class="today-overview">
+    <h3>📌 Your Overview for Today</h3>
+    <ul>
+        <li><strong>🕐 Pending Tasks:</strong> <span id="pending-tasks-count">0</span></li>
+        <li><strong>✅ Completed Tasks:</strong> <span id="completed-tasks-count">0</span></li>
+    </ul>
+</div>
 
     <div id="calendar"></div>
 
@@ -336,6 +342,16 @@ $username = $_SESSION['username'] ?? 'Guest';
     <div id="modalOverlay" class="modal-overlay"></div>
 
     <script>
+        // Add notification function
+    function showNotification(message) {
+        // Create notification element if it doesn't exist
+        if ($('#notification').length === 0) {
+            $('body').append('<div id="notification" style="display:none; position:fixed; bottom:20px; right:20px; background-color:#4CAF50; color:white; padding:15px; border-radius:5px; z-index:9999;"></div>');
+        }
+        
+        // Set message and display
+        $('#notification').text(message).fadeIn(300).delay(2000).fadeOut(500);
+    }
    $(document).ready(function() {
     // Initialize the color preview
     updateColorPreview();
@@ -630,16 +646,7 @@ $username = $_SESSION['username'] ?? 'Guest';
         }
     });
     
-    // Add notification function
-    function showNotification(message) {
-        // Create notification element if it doesn't exist
-        if ($('#notification').length === 0) {
-            $('body').append('<div id="notification" style="display:none; position:fixed; bottom:20px; right:20px; background-color:#4CAF50; color:white; padding:15px; border-radius:5px; z-index:9999;"></div>');
-        }
-        
-        // Set message and display
-        $('#notification').text(message).fadeIn(300).delay(2000).fadeOut(500);
-    }
+    
 });
 
     // Update the color preview based on selected color
@@ -920,6 +927,27 @@ function populateEditForm(event) {
     document.getElementById("addEventModal").style.display = "block";
     document.getElementById("modalOverlay").style.display = "block";
 }
+$('#showNotificationsBtn').on('click', function() {
+    $('#notificationsPanel').toggle();
+
+    $.ajax({
+        url: 'fetch_notifications.php',
+        method: 'GET',
+        success: function(data) {
+            const list = $('#notificationList');
+            list.empty();
+            const notifications = JSON.parse(data);
+            if (notifications.length === 0) {
+                list.append('<li>No new notifications</li>');
+            } else {
+                notifications.forEach(n => {
+                    list.append(`<li>${n.message}</li>`);
+                });
+            }
+        }
+    });
+});
+
 
    // Handle form submission for adding/updating event
 $('#addEventForm').on('submit', function(e) {
@@ -973,10 +1001,12 @@ $('#addEventForm').on('submit', function(e) {
             type: 'POST',
             data: formData,
             success: function(response) {
-                alert(response);
+                showNotification('Event added successfully!');
+               // alert(response);
                 $('#calendar').fullCalendar('refetchEvents');
                 closeModal();
                 $('#addEventForm')[0].reset();
+               
             },
             error: function(xhr, status, error) {
                 // Improved error handling
