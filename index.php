@@ -1,7 +1,9 @@
 <?php
 session_start();
 $isLoggedIn = isset($_SESSION['user_id']);
-$username = $_SESSION['username'] ?? 'Guest';
+// Use username from the proper session variable (assuming user_name is the correct one)
+// If you don't have a specific session variable for the username, you'll need to fetch it from the database
+$username = $_SESSION['username'] ?? 'Guest'; // Changed to a more standard name
 
 // Initialize task counts
 $pendingCount = 0;
@@ -12,6 +14,21 @@ if ($isLoggedIn) {
     include('db.php'); // Include your database connection
     
     $userId = $_SESSION['user_id'];
+    
+    // Fetch the actual username from the database if it's not in session
+    if ($username === 'root' || $username === 'Guest') {
+        $userQuery = "SELECT username FROM users WHERE id = ?";
+        $stmt = mysqli_prepare($conn, $userQuery);
+        mysqli_stmt_bind_param($stmt, "i", $userId);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        if ($row = mysqli_fetch_assoc($result)) {
+            $username = $row['username'];
+            // Save the correct username to session for future use
+            $_SESSION['username'] = $username;
+        }
+    }
+    
     $today = date('Y-m-d'); // Get today's date in YYYY-MM-DD format
     
     // Get pending tasks count for today
@@ -43,6 +60,7 @@ if ($isLoggedIn) {
 ?>
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -58,236 +76,74 @@ if ($isLoggedIn) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" rel="stylesheet" />
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f8f9fa;
-        }
-        #calendar {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #3788d8;
-        }
-        .demo-header {
-            margin-bottom: 20px;
-        }
-        .demo-explanation {
-            background-color: #e9f5ff;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 5px solid #3788d8;
-        }
-        /* Modal styling */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 10%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 20px;
-            border: 1px solid #ccc;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            z-index: 9999;
-            max-height: 80vh;
-            overflow-y: auto;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 8px;
-        }
-        
-        /* Form styling */
-        .modal form {
-            margin: 0;
-            padding: 10px 0;
-        }
-        
-        .modal input[type="text"],
-        .modal input[type="datetime-local"],
-        .modal select,
-        .modal textarea {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0 15px 0;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        .modal button {
-            padding: 8px 15px;
-            margin-right: 10px;
-            cursor: pointer;
-            border: none;
-            border-radius: 4px;
-            background-color: #3788d8;
-            color: white;
-        }
-        
-        .modal button:hover {
-            background-color: #2c6aa8;
-        }
-        
-        /* Color preview */
-        .color-preview {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            vertical-align: middle;
-            border: 1px solid #ccc;
-            margin-left: 10px;
-            border-radius: 3px;
-        }
-        
-        #deleteButton {
-            background-color: #ff6b6b;
-            color: white;
-        }
-        
-        #deleteButton:hover {
-            background-color: #e95454;
-        }
-        
-        .button-group {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            color: white;
-            margin-left: 5px;
-        }
-        
-        .status-pending {
-            background-color: #ffc107;
-        }
-        
-        .status-completed {
-            background-color: #28a745;
-        }
-        
-        .status-cancelled {
-            background-color: #dc3545;
-        }
-        
-        .recurring-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            background-color: #17a2b8;
-            color: white;
-            margin-left: 5px;
-        }
-        
-        /* Dialog styling */
-        .modal-dialog {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 10000;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-        }
-        
-        .dialog-buttons {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        .dialog-buttons button {
-            padding: 8px 15px;
-            cursor: pointer;
-            border: none;
-            border-radius: 4px;
-            min-width: 100px;
-        }
-        
-        .btn-primary {
-            background-color: #3788d8;
-            color: white;
-        }
-        
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-        
-        /* Overlay for modals */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 9998;
-        }
-    </style>
-</head>
-<body>
-<div class="demo-header">
-    <h1>📅 Hello, <?php echo htmlspecialchars($username); ?>!</h1>
-    <p>Welcome back to your personal calendar dashboard.</p>
-    <p>Stay organized and on track — here's what’s happening today:</p>
-</div>
+    <link href="css/style.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <body>
+    <div class="container">
+        <!-- Modern Header Section -->
+        <div class="page-header">
+            <div class="header-left">
+                <div class="header-title">
+                    <h1>Hello, <?php echo htmlspecialchars($username); ?>! 👋</h1>
+                    <p>Welcome to your personal calendar dashboard</p>
+                </div>
+                
+                <div class="overview-stats">
+                    <div class="stat-card">
+                        <h4>Pending Tasks</h4>
+                        <div class="stat-value">
+                            <span class="stat-icon">📌</span>
+                            <span id="pending-tasks-count"><?php echo $pendingCount; ?></span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h4>Completed Tasks</h4>
+                        <div class="stat-value">
+                            <span class="stat-icon">✅</span>
+                            <span id="completed-tasks-count"><?php echo $completedCount; ?></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <?php if ($isLoggedIn): ?>
+                    <a href="logout.php" class="header-button">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                <?php else: ?>
+                    <a href="login.php" class="header-button">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Login</span>
+                    </a>
+                <?php endif; ?>
+                
+                <div class="notifications-container">
+                    <button id="showNotificationsBtn" class="header-button">
+                        <i class="fas fa-bell"></i>
+                        <span>Notifications</span>
+                    </button>
+                    <div id="notificationsPanel" class="notifications-panel">
+                        <ul id="notificationList" class="notification-list">
+                            <!-- Notifications will be loaded here -->
+                        </ul>
+                    </div>
+                </div>
+                
+                <form action="export_schedule.php" method="post">
+                    <button type="submit" class="header-button">
+                        <i class="fas fa-file-export"></i>
+                        <span>Export CV</span>
+                    </button>
+                </form>
+            </div>
+        </div>
 
-<div class="user-actions">
-    <?php if ($isLoggedIn): ?>
-        <a href="logout.php">🚪 Logout</a>
-    <?php else: ?>
-        <a href="login.php">🔐 Login</a>
-    <?php endif; ?>
-
-
-
-    <div class="today-overview">
-        <h3>📌 Your Overview for Today</h3>
-        <ul>
-            <li><strong>🕐 Pending Tasks:</strong> <span id="pending-tasks-count"><?php echo $pendingCount; ?></span></li>
-            <li><strong>✅ Completed Tasks:</strong> <span id="completed-tasks-count"><?php echo $completedCount; ?></span></li>
-        </ul>
+        <!-- Calendar Section - Main Focus -->
+        <div id="calendar"></div>
     </div>
-
-    <!-- Add this somewhere in your index.php if not already present -->
-    <div class="notifications-container">
-    <button id="showNotificationsBtn" class="notifications-button">🔔 Notifications</button>
-    <div id="notificationsPanel" class="notifications-panel">
-        <ul id="notificationList" class="notification-list">
-            <!-- Notifications will be loaded here -->
-        </ul>
-    </div>
-</div>
-<div class="export-cv-container">
-    <form action="export_schedule.php" method="post">
-        <button type="submit" class="export-cv-button">📄 Export Today's CV</button>
-    </form>
-</div>
-
-
-
-    <div id="calendar"></div>
 
     <!-- Add/Edit Event Modal -->
     <div id="addEventModal" class="modal">
