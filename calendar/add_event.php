@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Check if required fields are provided
+// Check required fields
 if (!isset($_POST['title']) || !isset($_POST['start']) || !isset($_POST['end'])) {
     echo "Title, start, and end are required.";
     exit;
@@ -19,23 +19,23 @@ $start = $_POST['start'];
 $end = $_POST['end'];
 $description = $_POST['description'] ?? '';
 $repeat_type = $_POST['repeat_type'] ?? 'none';
+$color = $_POST['color'] ?? '#3788d8'; // default color if none
+$status = $_POST['status'] ?? 'pending'; // default: pending
+$location = $_POST['location'] ?? '';
+$reminder = $_POST['reminder'] ?? '15'; // default reminder: 15 minutes
 
-// Calculate a default repeat_until date based on repeat_type (if applicable)
 $repeat_until = null;
 if ($repeat_type !== 'none') {
     $date = new DateTime($start);
     switch ($repeat_type) {
         case 'daily':
-            $date->modify('+1 year'); // Daily events repeat for a year by default
+            $date->modify('+1 year');
             break;
         case 'weekly':
-            $date->modify('+1 year'); // Weekly events repeat for a year by default
+            $date->modify('+1 year');
             break;
         case 'monthly':
-            $date->modify('+2 years'); // Monthly events repeat for 2 years by default
-            break;
-        case 'annually':
-            $date->modify('+5 years'); // Annual events repeat for 5 years by default
+            $date->modify('+2 years');
             break;
     }
     $repeat_until = $date->format('Y-m-d');
@@ -43,9 +43,9 @@ if ($repeat_type !== 'none') {
 
 $user_id = $_SESSION['user_id'];
 
-// Insert the event
-$stmt = $conn->prepare("INSERT INTO events (title, start, end, description, repeat_type, repeat_until, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("ssssssi", $title, $start, $end, $description, $repeat_type, $repeat_until, $user_id);
+// Modified SQL to include reminder field
+$stmt = $conn->prepare("INSERT INTO events (title, start, end, description, repeat_type, repeat_until, location, color, status, reminder, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("ssssssssssi", $title, $start, $end, $description, $repeat_type, $repeat_until, $location, $color, $status, $reminder, $user_id);
 
 if ($stmt->execute()) {
     echo "Event added successfully.";
