@@ -16,31 +16,27 @@ $debug['session_user_id'] = isset($_SESSION['user_id']) ? $_SESSION['user_id'] :
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     echo json_encode([
-        'success' => false,
         'error' => 'Not authenticated',
         'debug' => $debug
     ]);
     exit();
 }
 
-// Validate event ID
-if (!isset($_GET['id'])) {
+if (!isset($_GET['user_id'])) {
     echo json_encode([
-        'success' => false,
-        'error' => 'Event ID is required',
+        'error' => 'User ID is required',
         'debug' => $debug
     ]);
     exit();
 }
 
-$event_id = intval($_GET['id']);
-$debug['requested_event_id'] = $event_id;
+$user_id = intval($_GET['user_id']);
+$debug['requested_user_id'] = $user_id;
 
 try {
     // Test database connection
     if ($conn->connect_error) {
         echo json_encode([
-            'success' => false,
             'error' => 'Database connection failed',
             'debug' => $debug
         ]);
@@ -49,29 +45,45 @@ try {
     
     $debug['connection_ok'] = true;
     
-    // Prepare and execute query with JOIN to get user details
+    // First, let's check if this user exists
+    $checkUserStmt = $conn->prepare("SELECT id, username FROM users WHERE id = ?");
+    $checkUserStmt->bind_param("i", $user_id);
+    $checkUserStmt->execute();
+    $userResult = $checkUserStmt->get_result();
+    
+    if ($userResult->num_rows === 0) {
+        echo json_encode([
+            'error' => 'User not found',
+            'debug' => $debug
+        ]);
+        exit();
+    }
+    
+    $userData = $userResult->fetch_assoc();
+    $debug['user_found'] = true;
+    $debug['username'] = $userData['username'];
+    
+    // Now query for events
     $stmt = $conn->prepare("
-        SELECT e.*, u.username 
-        FROM events e
-        JOIN users u ON e.user_id = u.id
-        WHERE e.id = ?
+        SELECT id, title, start, end, status 
+        FROM events 
+        WHERE user_id = ?
+        ORDER BY start DESC
     ");
     
     if (!$stmt) {
         echo json_encode([
-            'success' => false,
             'error' => 'Prepare statement failed: ' . $conn->error,
             'debug' => $debug
         ]);
         exit();
     }
     
-    $stmt->bind_param("i", $event_id);
+    $stmt->bind_param("i", $user_id);
     $executed = $stmt->execute();
     
     if (!$executed) {
         echo json_encode([
-            'success' => false,
             'error' => 'Execute failed: ' . $stmt->error,
             'debug' => $debug
         ]);
@@ -81,28 +93,20 @@ try {
     $result = $stmt->get_result();
     $debug['num_rows'] = $result->num_rows;
     
-    if ($result->num_rows === 0) {
-        echo json_encode([
-            'success' => false,
-            'error' => 'Event not found',
-            'debug' => $debug
-        ]);
-        exit();
+    $events = [];
+    while ($row = $result->fetch_assoc()) {
+        $events[] = $row;
     }
     
-    $event = $result->fetch_assoc();
-    $debug['event_found'] = true;
-    
-    // Return successful response with event data
+    // Add debugging information to help troubleshoot
     echo json_encode([
-        'success' => true,
-        'event' => $event,
-        'debug' => $debug
+        'events' => $events,
+        'debug' => $debug,
+        'count' => count($events)
     ]);
     
 } catch (Exception $e) {
     echo json_encode([
-        'success' => false,
         'error' => 'Database error: ' . $e->getMessage(),
         'debug' => $debug
     ]);
