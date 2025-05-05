@@ -34,9 +34,14 @@ if (!($conn instanceof PDO)) {
     }
 }
 
+// Check if this is an AJAX request
+$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+
+
 // Initialize messages
 $role_message = '';
 $announcement_message = '';
+$response = ['success' => false, 'message' => ''];
 
 // Handle role update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_role'], $_POST['user_id'])) {
@@ -46,28 +51,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_role'], $_POST
     $stmt = $conn->prepare("UPDATE users SET role = ? WHERE id = ?");
     if ($stmt->execute([$newRole, $userId])) {
         $role_message = "<div class='alert alert-success'>User role updated successfully!</div>";
+        $response = ['success' => true, 'message' => 'User role updated successfully!', 'new_role' => $newRole];
 
-        // Log the action
-        $logStmt = $conn->prepare("INSERT INTO audit_logs (user_id, action) VALUES (?, ?)");
-        $logStmt->execute([$_SESSION['user_id'], "Updated role for user ID $userId to $newRole"]);
-
-        // If this is an AJAX request, return JSON response
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            echo json_encode(['success' => true, 'new_role' => $newRole]);
-            exit();
-        }
     } else {
         $role_message = "<div class='alert alert-danger'>Failed to update user role.</div>";
+        $response = ['success' => false, 'message' => 'Failed to update user role.'];
+    }
 
-        // If this is an AJAX request, return JSON response
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            echo json_encode(['success' => false, 'message' => 'Failed to update user role']);
-            exit();
-        }
+    // Return JSON response for AJAX requests
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        echo json_encode($response);
+        exit();
     }
 }
-
-
 
 // Handle announcement creation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_announcement'])) {
@@ -76,36 +73,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_announcement']
     $expiresAt = $_POST['expires_at'];
     $createdBy = $_SESSION['user_id'];
 
-    $stmt = $conn->prepare("INSERT INTO announcements (title, message, expires_at, created_by) VALUES (?, ?, ?, ?)");
-    if ($stmt->execute([$title, $message, $expiresAt, $createdBy])) {
-        $announcement_message = "<div class='alert alert-success'>Announcement created successfully!</div>";
+    $response = ['success' => false, 'message' => ''];
 
-        // Log the action
-        $logStmt = $conn->prepare("INSERT INTO audit_logs (user_id, action) VALUES (?, ?)");
-        $logStmt->execute([$_SESSION['user_id'], "Created announcement: $title"]);
+    try {
+        $stmt = $conn->prepare("INSERT INTO announcements (title, message, expires_at, created_by) VALUES (?, ?, ?, ?)");
+        if ($stmt->execute([$title, $message, $expiresAt, $createdBy])) {
+            $response = [
+                'success' => true, 
+                'message' => 'Announcement created successfully!',
+                'announcement' => [
+                    'id' => $conn->lastInsertId(),
+                    'title' => $title,
+                    'message' => $message,
+                    'expires_at' => $expiresAt
+                ]
+            ];
+        } else {
+            $response = ['success' => false, 'message' => 'Failed to create announcement.'];
+        }
+    } catch (PDOException $e) {
+        $response = ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+    }
+
+    // Return JSON response for AJAX requests
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        echo json_encode($response);
+        exit();
     } else {
-        $announcement_message = "<div class='alert alert-danger'>Failed to create announcement.</div>";
+        // For non-AJAX requests (shouldn't happen with our JS fix)
+        $announcement_message = $response['success'] 
+            ? "<div class='alert alert-success'>{$response['message']}</div>"
+            : "<div class='alert alert-danger'>{$response['message']}</div>";
     }
 }
-
 // Handle announcement deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_announcement'], $_POST['announcement_id'])) {
     $announcementId = intval($_POST['announcement_id']);
+    $response = ['success' => false, 'message' => ''];
 
-    // Get announcement title for logging
-    $stmt = $conn->prepare("SELECT title FROM announcements WHERE id = ?");
-    $stmt->execute([$announcementId]);
-    $announcement = $stmt->fetch();
+    try {
+        $stmt = $conn->prepare("DELETE FROM announcements WHERE id = ?");
+        if ($stmt->execute([$announcementId])) {
+            $response = [
+                'success' => true, 
+                'message' => 'Announcement deleted successfully!', 
+                'id' => $announcementId
+            ];
+        } else {
+            $response = ['success' => false, 'message' => 'Failed to delete announcement.'];
+        }
+    } catch (PDOException $e) {
+        $response = ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+    }
 
-    $stmt = $conn->prepare("DELETE FROM announcements WHERE id = ?");
-    if ($stmt->execute([$announcementId])) {
-        $announcement_message = "<div class='alert alert-success'>Announcement deleted successfully!</div>";
-
-        // Log the action
-        $logStmt = $conn->prepare("INSERT INTO audit_logs (user_id, action) VALUES (?, ?)");
-        $logStmt->execute([$_SESSION['user_id'], "Deleted announcement: " . $announcement['title']]);
+    // Return JSON response for AJAX requests
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        echo json_encode($response);
+        exit();
     } else {
-        $announcement_message = "<div class='alert alert-danger'>Failed to delete announcement.</div>";
+        // Fallback for non-AJAX requests
+        $announcement_message = $response['success'] 
+            ? "<div class='alert alert-success'>{$response['message']}</div>"
+            : "<div class='alert alert-danger'>{$response['message']}</div>";
     }
 }
 ?>
@@ -953,53 +984,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_announcement']
                     </div>
 
                     <div class="col-lg-6 mb-4">
-                        <div class="card shadow">
-                            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                <h6 class="m-0 font-weight-bold text-primary">Active Announcements</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="list-group">
-                                    <?php
-                                    $announcements_query = $conn->query("
-                                            SELECT a.*, u.username 
-                                            FROM announcements a
-                                            JOIN users u ON a.created_by = u.id
-                                            WHERE a.expires_at > NOW()
-                                            ORDER BY a.created_at DESC
-                                        ");
+    <div class="card shadow">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Active Announcements</h6>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                <?php
+                $announcements_query = $conn->query("
+                    SELECT a.*, u.username 
+                    FROM announcements a
+                    JOIN users u ON a.created_by = u.id
+                    WHERE a.expires_at > NOW()
+                    ORDER BY a.created_at DESC
+                ");
 
-                                    if ($announcements_query->rowCount() > 0):
-                                        while ($announcement = $announcements_query->fetch()):
-                                            ?>
-                                            <div class="list-group-item list-group-item-action">
-                                                <div class="d-flex w-100 justify-content-between">
-                                                    <h5 class="mb-1"><?= htmlspecialchars($announcement['title']) ?></h5>
-                                                    <small><?= date('M d, Y H:i', strtotime($announcement['created_at'])) ?></small>
-                                                </div>
-                                                <p class="mb-1"><?= htmlspecialchars($announcement['message']) ?></p>
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <small class="text-muted">
-                                                        By: <?= htmlspecialchars($announcement['username']) ?> |
-                                                        Expires:
-                                                        <?= date('M d, Y H:i', strtotime($announcement['expires_at'])) ?>
-                                                    </small>
-                                                    <form method="post" class="ms-2">
-                                                        <input type="hidden" name="announcement_id"
-                                                            value="<?= $announcement['id'] ?>">
-                                                        <button type="submit" name="delete_announcement"
-                                                            class="btn btn-sm btn-danger">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                            <?php
-                                        endwhile;
-                                    else:
-                                        ?>
-                                        <div class="list-group-item text-center py-4">
-                                            <i class="bi bi-megaphone fs-1 text-muted mb-2"></i>
-                                            <p class="mb-0">No active announcements</p>
+                if ($announcements_query->rowCount() > 0):
+                    while ($announcement = $announcements_query->fetch()):
+                        ?>
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1"><?= htmlspecialchars($announcement['title']) ?></h5>
+                                <small><?= date('M d, Y H:i', strtotime($announcement['created_at'])) ?></small>
+                            </div>
+                            <p class="mb-1"><?= htmlspecialchars($announcement['message']) ?></p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    By: <?= htmlspecialchars($announcement['username']) ?> |
+                                    Expires: <?= date('M d, Y H:i', strtotime($announcement['expires_at'])) ?>
+                                </small>
+                                <!-- PUT THE DELETE FORM RIGHT HERE -->
+                                <form method="post" data-announcement-delete>
+                                    <input type="hidden" name="announcement_id" value="<?= $announcement['id'] ?>">
+                                    <button class="btn btn-sm btn-danger delete-announcement-btn" data-announcement-id="<?= $announcement['id'] ?>">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                </form>
+                            </div>
+                        </div>
+                        <?php
+                    endwhile;
+                else:
+                    ?>
+                    <div class="list-group-item text-center py-4">
+                        <i class="bi bi-megaphone fs-1 text-muted mb-2"></i>
+                        <p class="mb-0">No active announcements</p>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -1121,40 +1150,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_announcement']
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 <script>
+    
     $(document).ready(function () {
         // Initialize DataTables with better pagination handling
         $('#usersTable, #eventsTable, #auditTable').DataTable({
-            responsive: true,
-            pageLength: 10,
-            lengthMenu: [25, 50, 100],
-            language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search...",
-            },
-            initComplete: function () {
-                $('.dataTables_length select').css({
-                    'width': 'auto',
-                    'min-width': '150px'
-                });
-            },
-            // Add these settings to prevent empty pages
-            drawCallback: function (settings) {
-                var api = this.api();
-                var recordsTotal = api.page.info().recordsTotal;
-                var recordsDisplay = api.page.info().recordsDisplay;
-                var page = api.page.info().page;
-                var pages = api.page.info().pages;
-
-                // If no records after filtering, show first page
-                if (recordsDisplay === 0) {
-                    api.page('first').draw('page');
-                }
-                // If current page is empty but there are records, go to previous page
-                else if (api.rows({ page: 'current' }).data().length === 0 && page > 0) {
-                    api.page(page - 1).draw('page');
-                }
-            }
+    responsive: true,
+    pageLength: 10,
+    lengthMenu: [25, 50, 100],
+    searching: false, // Disable the search box
+    initComplete: function () {
+        $('.dataTables_length select').css({
+            'width': 'auto',
+            'min-width': '150px'
         });
+    },
+    // Add these settings to prevent empty pages
+    drawCallback: function (settings) {
+        var api = this.api();
+        var recordsTotal = api.page.info().recordsTotal;
+        var recordsDisplay = api.page.info().recordsDisplay;
+        var page = api.page.info().page;
+        var pages = api.page.info().pages;
+
+        // If no records after filtering, show first page
+        if (recordsDisplay === 0) {
+            api.page('first').draw('page');
+        }
+        // If current page is empty but there are records, go to previous page
+        else if (api.rows({ page: 'current' }).data().length === 0 && page > 0) {
+            api.page(page - 1).draw('page');
+        }
+    }
+});
+
 
         // Tab Navigation
         $('.nav-link').click(function (e) {
@@ -1291,6 +1319,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_announcement']
                     }
                 });
             });
+
 
 
             // ========== FIX 3: USER EVENTS FILTERING ==========
@@ -1639,7 +1668,161 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_announcement']
             return date1 >= startOfWeek && date1 <= endOfWeek;
         }
 
+        // Announcement
+        // In your JavaScript, modify the announcement form submission handler
+$('#announcementForm').on('submit', function(e) {
+    e.preventDefault(); // Prevent the default form submission
+    
+    // Get form data
+    const formData = $(this).serialize();
+    
+    // Show loading state
+    const submitBtn = $(this).find('[type="submit"]');
+    submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...');
+    
+    $.ajax({
+        url: 'admin_index.php',
+        method: 'POST',
+        data: formData + '&create_announcement=1',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                // Add the new announcement to the list without reloading
+                addAnnouncementToUI(response.announcement);
+                
+                // Show success message
+                showAlert('success', 'Announcement created successfully!');
+                
+                // Reset the form
+                $('#announcementForm')[0].reset();
+            } else {
+                showAlert('danger', response.message || 'Failed to create announcement');
+            }
+        },
+        error: function(xhr) {
+            showAlert('danger', 'Error: ' + xhr.statusText);
+        },
+        complete: function() {
+            submitBtn.prop('disabled', false).html('<i class="bi bi-send me-1"></i> Create Announcement');
+        }
+    });
+});
 
+function addAnnouncementToUI(announcement) {
+    const announcementHtml = `
+        <div class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">${escapeHtml(announcement.title)}</h5>
+                <small>Just now</small>
+            </div>
+            <p class="mb-1">${escapeHtml(announcement.message)}</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    By: <?= htmlspecialchars($_SESSION['username']) ?> |
+                    Expires: ${formatDateTime(announcement.expires_at)}
+                </small>
+                <form method="post" class="ms-2">
+                    <input type="hidden" name="announcement_id" value="${announcement.id}">
+                    <button type="submit" name="delete_announcement" class="btn btn-sm btn-danger">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    // Prepend to the announcements list
+    $('.list-group').prepend(announcementHtml);
+    
+    // If there was a "no announcements" message, remove it
+    $('.list-group-item.text-center').remove();
+}
+
+// Handle announcement deletion via AJAX
+$(document).on('submit', 'form[data-announcement-delete]', function(e) {
+    e.preventDefault(); // Prevent default form submission
+    
+    const form = $(this);
+    const announcementId = form.find('input[name="announcement_id"]').val();
+    const announcementItem = form.closest('.list-group-item');
+    
+    // Show loading state
+    const deleteBtn = form.find('button[name="delete_announcement"]');
+    deleteBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+    
+    $.ajax({
+        url: window.location.href, // Submit to current page
+        method: 'POST',
+        data: {
+            delete_announcement: 1,
+            announcement_id: announcementId
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                // Remove the announcement from UI
+                announcementItem.fadeOut(300, function() {
+                    $(this).remove();
+                    
+                    // If no announcements left, show empty message
+                    if ($('.list-group-item').length === 0) {
+                        $('.list-group').html(`
+                            <div class="list-group-item text-center py-4">
+                                <i class="bi bi-megaphone fs-1 text-muted mb-2"></i>
+                                <p class="mb-0">No active announcements</p>
+                            </div>
+                        `);
+                    }
+                });
+                
+                // Show success message
+                showAlert('success', 'Announcement deleted successfully!');
+            } else {
+                showAlert('danger', response.message || 'Failed to delete announcement');
+                deleteBtn.prop('disabled', false).html('<i class="bi bi-trash"></i>');
+            }
+        },
+        error: function(xhr) {
+            showAlert('danger', 'Error: ' + xhr.statusText);
+            deleteBtn.prop('disabled', false).html('<i class="bi bi-trash"></i>');
+        }
+    });
+});
+function showAlert(type, message) {
+    const alert = $(`
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `);
+    
+    $('#announcements .page-header').after(alert);
+    
+    setTimeout(() => {
+        alert.alert('close');
+    }, 5000);
+}
+
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function formatDateTime(dateTimeString) {
+    const date = new Date(dateTimeString);
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
 
 
 
