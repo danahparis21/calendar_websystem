@@ -519,4 +519,55 @@
       min-width: calc(50% - 10px);
       flex: none;
     }
+
+    .reminder-popup {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #ffeeba;
+      padding: 15px 20px;
+      border: 1px solid #f5c6cb;
+      border-radius: 10px;
+      z-index: 1000;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      font-family: sans-serif;
+  }
+
+#notificationList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: #333; /* Dark text color */
+}
+
+#notificationList li {
+  padding: 10px 15px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #ffffff;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#notificationList li.error {
+  color: #d32f2f;
+  background-color: #ffebee;
+}
+
+.reminder-meta {
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 8px;
+}
+
+.reminder-meta span {
+  display: block;
+  margin: 3px 0;
+}
+
+.reminder-title {
+  font-weight: 600;
+  color: #1976d2;
+}
+  
   }

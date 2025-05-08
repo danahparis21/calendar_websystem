@@ -72,7 +72,25 @@ $stmt->bind_param("sssssssssiii",
 );
 
 if ($stmt->execute()) {
-    echo "Event updated successfully.";
+    // Delete old reminders for the event
+    $delete = $conn->prepare("DELETE FROM reminders WHERE event_id = ?");
+    $delete->bind_param("i", $event_id);
+    $delete->execute();
+    $delete->close();
+
+    // Insert new reminder
+    $minutesBefore = intval($reminder);
+    $startTime = new DateTime($start);
+    $reminderTime = clone $startTime;
+    $reminderTime->modify("-$minutesBefore minutes");
+    $formattedReminderTime = $reminderTime->format('Y-m-d H:i:s');
+
+    $insertReminder = $conn->prepare("INSERT INTO reminders (event_id, method, minutes_before, reminder_time, shown) VALUES (?, 'popup', ?, ?, 0)");
+    $insertReminder->bind_param("iis", $event_id, $minutesBefore, $formattedReminderTime);
+    $insertReminder->execute();
+    $insertReminder->close();
+
+    echo "Event and reminder updated successfully.";
 } else {
     echo "Error updating event: " . $conn->error;
 }

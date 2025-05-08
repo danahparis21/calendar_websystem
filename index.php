@@ -79,6 +79,76 @@ if ($isLoggedIn) {
     <link href="css/style.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <body>
+    <style>
+    /* Add this to your <head> section or CSS file */
+    .notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ff4444; /* Vibrant red */
+    color: white;
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    border: 2px solid #ffffff; /* White border for contrast */
+    transition: all 0.3s ease; /* Smooth animations */
+}
+
+/* Animation for new notifications */
+.notification-badge.pulse {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+
+    #notificationList {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        color: #333; /* Dark text color */
+    }
+
+    #notificationList li {
+        padding: 10px 15px;
+        border-bottom: 1px solid #e0e0e0;
+        background-color: #ffffff;
+        margin-bottom: 5px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    #notificationList li.error {
+        color: #d32f2f;
+        background-color: #ffebee;
+    }
+
+    .reminder-meta {
+        font-size: 0.85em;
+        color: #666;
+        margin-top: 8px;
+    }
+
+    .reminder-meta span {
+        display: block;
+        margin: 3px 0;
+    }
+
+    .reminder-title {
+        font-weight: 600;
+        color: #1976d2;
+    }
+</style>
     <div class="container">
         <!-- Modern Header Section -->
         <div class="page-header">
@@ -121,16 +191,17 @@ if ($isLoggedIn) {
                 <?php endif; ?>
                 
                 <div class="notifications-container">
-                    <button id="showNotificationsBtn" class="header-button">
-                        <i class="fas fa-bell"></i>
-                        <span>Notifications</span>
-                    </button>
-                    <div id="notificationsPanel" class="notifications-panel">
-                        <ul id="notificationList" class="notification-list">
-                            <!-- Notifications will be loaded here -->
-                        </ul>
-                    </div>
-                </div>
+            <button id="showNotificationsBtn" class="header-button">
+                <i class="fas fa-bell"></i>
+                <span class="btn-text">Notifications</span>
+                <span id="notificationBadge" class="notification-badge" style="display:none;"></span>
+            </button>
+            <div id="notificationsPanel" class="notifications-panel">
+                <ul id="notificationList" class="notification-list">
+                    <!-- Notifications will be loaded here -->
+                </ul>
+            </div>
+        </div>
                 
                 <form action="export_schedule.php" method="post">
                     <button type="submit" class="header-button">
@@ -250,8 +321,199 @@ if ($isLoggedIn) {
     <div id="modalOverlay" class="modal-overlay"></div>
 
 
+    <script>
+fetch('generate_reminders.php');
+</script>
 
-    <script src="js/notifications.js"></script>
+<script>
+document.getElementById("showNotificationsBtn").addEventListener("click", function() {
+    const badge = document.getElementById('notificationBadge');
+    const notificationsPanel = document.getElementById('notificationsPanel');
+
+    // Toggle the visibility of the notifications panel
+    notificationsPanel.classList.toggle('show'); // Assuming you have CSS to control the 'show' class
+
+    // Hide the badge when the button is clicked (assuming the panel becomes visible)
+    badge.style.display = 'none';
+
+});
+
+function fetchNotifications() {
+    const container = document.getElementById('notificationList');
+    const badge = document.getElementById('notificationBadge');
+    const notificationsPanel = document.getElementById('notificationsPanel');
+    if (!container || !badge || !notificationsPanel) return;
+
+    // If the notification panel is currently visible, we assume the user has seen the notifications,
+    // so we keep the badge hidden.
+    if (notificationsPanel.classList.contains('show')) {
+        return;
+    }
+
+    fetch('get_reminders.php?t=' + new Date().getTime())
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Fetched reminders:', data);
+            container.innerHTML = '';
+            let hasNewNotifications = false;
+
+            if (data.error) {
+                container.innerHTML = `<li class="error">Error: ${data.error}</li>`;
+                badge.style.display = 'none';
+                return;
+            }
+
+            const reminders = data.reminders;
+
+            if (!reminders || reminders.length === 0) {
+                container.innerHTML = '<li>No upcoming reminders found</li>';
+                badge.style.display = 'none';
+                return;
+            }
+
+            reminders.sort((a, b) => new Date(b.reminder_time) - new Date(a.reminder_time));
+
+            reminders.forEach(reminder => {
+            const eventTime = new Date(reminder.event_start);
+            const reminderTime = new Date(reminder.reminder_time);
+            const now = new Date();
+
+            const minsLeft = Math.round((eventTime - now) / (1000 * 60));
+
+            // Only show if reminder time is reached and event hasn't passed
+            if (reminderTime <= now && minsLeft > 0) {
+                // Format minsLeft into days, hours, minutes
+                let days = Math.floor(minsLeft / 1440);
+                let remainingMins = minsLeft % 1440;
+                let hours = Math.floor(remainingMins / 60);
+                let minutes = remainingMins % 60;
+
+                let startsInText = '';
+                if (days > 0) {
+                    startsInText += `${days} day${days > 1 ? 's' : ''} `;
+                }
+                if (hours > 0 || days > 0) { // show hours even if days are present
+                    startsInText += `${hours} hour${hours > 1 ? 's' : ''} `;
+                }
+                startsInText += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+
+                // Build the reminder item
+                const item = document.createElement('li');
+                item.innerHTML = `
+                    <div class="reminder-title">${reminder.title}</div>
+                    <div class="reminder-meta">
+                        <span>⏰ Event: ${eventTime.toLocaleString()}</span>
+                        <span>🔔 Reminder was set for ${reminderTime.toLocaleString()}</span>
+                        <span>⏱️ Starts in ${startsInText}</span>
+                    </div>
+                `;
+                container.appendChild(item);
+                hasNewNotifications = true;
+            }
+        });
+
+        // Show the badge only if the notification panel is NOT visible and there are new notifications
+        if (!notificationsPanel.classList.contains('show') && hasNewNotifications && container.children.length > 0) {
+            badge.style.display = 'inline-block';
+        } else if (!notificationsPanel.classList.contains('show')) {
+            badge.style.display = 'none'; // Ensure it's hidden if no new notifications and panel is closed
+        }
+
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            container.innerHTML = `<li class="error">Failed to load reminders: ${error.message}</li>`;
+            badge.style.display = 'none';
+        });
+}
+
+// Refresh every 30 seconds and on page load
+setInterval(fetchNotifications, 30000);
+document.addEventListener('DOMContentLoaded', fetchNotifications);
+
+function checkReminders() {
+    // Add timestamp parameter to prevent caching
+    fetch('get_reminders.php?ts=' + new Date().getTime())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const reminders = data.reminders;
+            console.log('Checking reminders, found:', reminders.length);
+            if (reminders && reminders.length > 0) {
+                reminders.forEach(event => {
+
+                    // Check if the event is within 5 minutes from now
+                    const eventTime = new Date(event.start);
+                    const currentTime = new Date();
+                    const timeDiff = (eventTime - currentTime) / (1000 * 60); // difference in minutes
+                    
+                    if (timeDiff > 0 && timeDiff <= 5) {
+                        console.log('Showing notification for event:', event.title);
+                        showPopupReminder(event);
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error checking reminders:', error);
+        });
+}
+
+function showPopupReminder(event) {
+    const popup = document.createElement('div');
+    popup.className = 'reminder-popup';
+    popup.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-left: 4px solid #0d6efd;
+        padding: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        z-index: 1000;
+        min-width: 300px;
+        border-radius: 4px;
+    `;
+    
+    popup.innerHTML = `
+        <strong>Reminder:</strong><br>
+        ${event.title}<br>
+        Starts at: ${new Date(event.start).toLocaleTimeString()}<br>
+        ${event.location ? `Location: ${event.location}` : ''}
+        <button onclick="this.parentElement.remove()" style="position:absolute;top:5px;right:5px;background:none;border:none;cursor:pointer;">×</button>
+    `;
+    document.body.appendChild(popup);
+
+    setTimeout(() => {
+        if (popup && document.body.contains(popup)) {
+            popup.remove();
+        }
+    }, 10000); // remove popup after 10 seconds
+}
+
+// Check for reminders every minute
+setInterval(checkReminders, 60000);
+
+// Check immediately on page load too
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, checking for reminders...');
+    checkReminders();
+    
+    // Also populate the notification list if it exists
+    if (document.getElementById('notificationList')) {
+        fetchNotifications();
+    }
+});
+    </script>
+
 
     <script>
         // Add notification function
@@ -455,55 +717,79 @@ if ($isLoggedIn) {
         
         // ADD THIS: Handle event drag and drop
         eventDrop: function(event, delta, revertFunc) {
-            if (!isLoggedIn) {
-                alert("Please log in to update events.");
+        if (!isLoggedIn) {
+            alert("Please log in to update events.");
+            revertFunc();
+            return;
+        }
+
+        const startStr = event.start.format("YYYY-MM-DD HH:mm:ss");
+        const endStr = event.end ? event.end.format("YYYY-MM-DD HH:mm:ss") : event.start.clone().add(1, 'hour').format("YYYY-MM-DD HH:mm:ss");
+
+        let eventId = event.id;
+        let updateEventData = { // Data for updating the event itself
+            event_id: eventId,
+            title: event.title,
+            start: startStr,
+            end: endStr,
+            description: event.description || '',
+            repeat_type: event.repeat_type || 'none',
+            status: event.status || 'pending',
+            color: event.color || '#3788d8',
+            location: event.location || '',
+            reminder: event.reminder || '15'
+        };
+
+        let updateUrl = 'calendar/update_event.php';
+        if (event.is_recurring && event.start.format('YYYY-MM-DD') !== event.original_start) {
+            updateUrl = 'calendar/update_instance.php';
+            updateEventData.instance_date = event.original_start;
+        }
+
+        $.ajax({
+            url: updateUrl,
+            type: 'POST',
+            data: updateEventData,
+            success: function(response) {
+                showNotification('Event updated successfully!');
+
+                // Calculate the new reminder time
+                const reminderMinutesBefore = parseInt(event.reminder, 10);
+                const newReminderMoment = event.start.clone().subtract(reminderMinutesBefore, 'minutes');
+                const newReminderTimeStr = newReminderMoment.format("YYYY-MM-DD HH:mm:ss");
+
+                // Send an AJAX request to update the reminder
+                $.ajax({
+                    url: 'update_reminder.php', // New PHP file to handle reminder updates
+                    type: 'POST',
+                    data: {
+                        event_id: eventId,
+                        reminder_time: newReminderTimeStr,
+                        time_before: reminderMinutesBefore // Optional, but good to send
+                    },
+                    success: function(reminderResponse) {
+                        console.log("Reminder updated:", reminderResponse);
+                        // Optionally show a separate notification for reminder update
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error updating reminder:", error);
+                        alert("Error updating reminder.");
+                        // You might want to inform the user that the event moved but the reminder update failed
+                    },
+                    complete: function() {
+                        // Refresh the calendar after both event and reminder updates (or just event if reminder update fails)
+                        $('#calendar').fullCalendar('refetchEvents');
+                    }
+                });
+
+            },
+            error: function(xhr, status, error) {
+                console.error("Error updating event:", error);
+                alert("Error updating event. Changes reverted.");
                 revertFunc();
-                return;
             }
-            
-            // Format dates as needed for the database
-            const startStr = event.start.format("YYYY-MM-DD HH:mm:ss");
-            const endStr = event.end ? event.end.format("YYYY-MM-DD HH:mm:ss") : event.start.clone().add(1, 'hour').format("YYYY-MM-DD HH:mm:ss");
-            
-            // Handle recurring events differently
-            let eventId = event.id;
-            let updateData = {
-                event_id: eventId,
-                title: event.title,
-                start: startStr,
-                end: endStr,
-                description: event.description || '',
-                repeat_type: event.repeat_type || 'none',
-                status: event.status || 'pending',
-                color: event.color || '#3788d8',
-                location: event.location || '',
-                reminder: event.reminder || '15'
-            };
-            
-            // Determine if this is a recurring event instance
-            let updateUrl = 'calendar/update_event.php';
-            if (event.is_recurring && event.start.format('YYYY-MM-DD') !== event.original_start) {
-                updateUrl = 'calendar/update_instance.php';
-                updateData.instance_date = event.original_start;
-            }
-            
-            $.ajax({
-                url: updateUrl,
-                type: 'POST',
-                data: updateData,
-                success: function(response) {
-                    showNotification('Event updated successfully!');
-                    
-                    // Refresh the calendar to ensure consistency
-                    $('#calendar').fullCalendar('refetchEvents');
-                },
-                error: function(xhr, status, error) {
-                    console.error("Error updating event:", error);
-                    alert("Error updating event. Changes reverted.");
-                    revertFunc();
-                }
-            });
-        },
+        });
+    },
         
         // ADD THIS: Handle event resize
         eventResize: function(event, delta, revertFunc) {

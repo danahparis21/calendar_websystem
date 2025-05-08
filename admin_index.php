@@ -25,9 +25,12 @@ if (!($conn instanceof PDO)) {
     $username = "root";
     $password = "";
     $dbname = "calendar_system";
+    $port = "3307";
+    
 
     try {
-        $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+        $conn = new PDO("mysql:host=$servername;dbname=$dbname;port=$port", $username, $password);
+
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     } catch (PDOException $e) {
         die("Connection failed: " . $e->getMessage());

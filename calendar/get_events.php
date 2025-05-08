@@ -53,7 +53,7 @@ while ($row = $result->fetch_assoc()) {
         ];
         continue;
     }
-    
+
     // For recurring events, generate occurrences
     $origStart = new DateTime($row['start']);
     $origEnd = new DateTime($row['end']);
@@ -143,6 +143,36 @@ while ($row = $result->fetch_assoc()) {
     }
 }
 
+// Query to get announcements within the date range
+$announcementSql = "SELECT * FROM announcements WHERE expires_at >= ? AND created_at <= ?";
+$announcementStmt = $conn->prepare($announcementSql);
+
+$announcementStmt->bind_param("ss", $start, $end);
+$announcementStmt->execute();
+$announcementResult = $announcementStmt->get_result();
+
+
+
+while ($aRow = $announcementResult->fetch_assoc()) {
+    $events[] = [
+        'id' => 'announcement_' . $aRow['id'],
+        'title' => '📢 ' . $aRow['title'],
+        'start' => $aRow['created_at'],
+        'end' => $aRow['expires_at'],
+        'description' => $aRow['message'],
+        'color' => '#d3d2d6', // gray color for announcements
+        'editable' => false,
+        'allDay' => false
+    ];
+}
+
+
+header('Content-Type: application/json');
+echo json_encode($events);
+
+$stmt->close();
+$conn->close();
+
 // Helper function to advance date based on repeat type
 function advanceDate(&$date, $repeatType) {
     switch ($repeatType) {
@@ -157,10 +187,4 @@ function advanceDate(&$date, $repeatType) {
             break;
     }
 }
-
-header('Content-Type: application/json');
-echo json_encode($events);
-
-$stmt->close();
-$conn->close();
 ?>
