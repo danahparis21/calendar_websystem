@@ -78,7 +78,7 @@ if ($result->num_rows > 0) {
             $mail->Host = 'smtp.gmail.com';  // Replace with your SMTP server if different
             $mail->SMTPAuth = true;
             $mail->Username = 'mycalendaryo1001@gmail.com';    // Replace with your Gmail address
-            $mail->Password = 'ghdv zciv uzms nngd';      // Replace with your Gmail app password
+            $mail->Password = '';      // Replace with your Gmail app password
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = 587;
 

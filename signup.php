@@ -29,7 +29,7 @@ if (isset($_POST['submit'])) {
                 $mail->Host = 'smtp.gmail.com';
                 $mail->SMTPAuth = true;
                 $mail->Username = 'mycalendaryo1001@gmail.com';   // Use your Gmail address
-                $mail->Password = 'ghdv zciv uzms nngd';   // Use the Gmail app password you created
+                $mail->Password = '';   // Use the Gmail app password you created
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                 $mail->Port = 587;
 
@@ -158,6 +158,9 @@ if (isset($_POST['submit'])) {
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+        #togglePassword svg.active {
+            color: #0d6efd;
+        }
     </style>
 </head>
 <body>
@@ -178,10 +181,19 @@ if (isset($_POST['submit'])) {
                     <label for="email" class="form-label">Email</label>
                     <input type="email" class="form-control" id="email" name="email" required>
                 </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" required>
-                </div>
+                <div class="mb-3 position-relative">
+    <label for="password" class="form-label">Password</label>
+    <div class="input-group">
+        <input type="password" class="form-control" id="password" name="password" required>
+        <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16" id="eyeIcon">
+                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8z"/>
+                <path d="M8 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+            </svg>
+        </span>
+    </div>
+</div>
+
                 <div class="d-grid">
                     <button type="submit" name="submit" class="btn btn-success">Register</button>
                 </div>
@@ -192,7 +204,22 @@ if (isset($_POST['submit'])) {
             </div>
         </div>
     </div>
+    <script>
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
 
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.classList.remove('bi-eye');
+            eyeIcon.classList.add('bi-eye-slash', 'active');
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.classList.remove('bi-eye-slash', 'active');
+            eyeIcon.classList.add('bi-eye');
+        }
+    });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
