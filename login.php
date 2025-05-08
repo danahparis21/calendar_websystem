@@ -1,9 +1,6 @@
 <?php
 // Start session at the beginning
 session_start();
-echo '<pre>';
-print_r($_SESSION);
-echo '</pre>';
 
 session_destroy(); // Add this only for debugging
 session_start();   // Start fresh session
