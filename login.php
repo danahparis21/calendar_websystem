@@ -1,12 +1,9 @@
 <?php
 // Start session at the beginning
 session_start();
-<<<<<<< HEAD
-=======
-// echo '<pre>';
-// print_r($_SESSION);
-// echo '</pre>';
->>>>>>> 7e9b97bc9be19b9cab36efe76332537615c835f7
+echo '<pre>';
+print_r($_SESSION);
+echo '</pre>';
 
 session_destroy(); // Add this only for debugging
 session_start();   // Start fresh session
@@ -74,10 +71,6 @@ if (isset($_POST['login'])) {
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        #togglePassword svg.active {
-            color: #0d6efd;
-        }
-
     </style>
 </head>
 <body>
@@ -94,19 +87,10 @@ if (isset($_POST['login'])) {
                     <label for="username" class="form-label">Username</label>
                     <input type="text" class="form-control" id="username" name="username" required>
                 </div>
-                <div class="mb-3 position-relative">
-                <label for="password" class="form-label">Password</label>
-                <div class="input-group">
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
                     <input type="password" class="form-control" id="password" name="password" required>
-                    <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16" id="eyeIcon">
-                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8z"/>
-                            <path d="M8 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
-                        </svg>
-                    </span>
                 </div>
-            </div>
-
                 <div class="d-grid">
                     <button type="submit" name="login" class="btn btn-primary">Login</button>
                 </div>
@@ -117,24 +101,7 @@ if (isset($_POST['login'])) {
             </div>
         </div>
     </div>
-        <script>
-    document.getElementById('togglePassword').addEventListener('click', function () {
-        const passwordInput = document.getElementById('password');
-        const eyeIcon = document.getElementById('eyeIcon');
-
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            eyeIcon.classList.remove('bi-eye');
-            eyeIcon.classList.add('bi-eye-slash', 'active');
-        } else {
-            passwordInput.type = 'password';
-            eyeIcon.classList.remove('bi-eye-slash', 'active');
-            eyeIcon.classList.add('bi-eye');
-        }
-    });
-    </script>
-
-
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

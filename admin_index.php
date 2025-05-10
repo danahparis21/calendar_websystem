@@ -25,7 +25,7 @@ if (!($conn instanceof PDO)) {
     $username = "root";
     $password = "";
     $dbname = "calendar_system";
-    $port = "3307";
+    $port = "3306";
     
 
     try {
