@@ -1,6 +1,14 @@
+
 # 🗓️ myCalendar – Web-Based Scheduling System
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Made With](https://img.shields.io/badge/Made%20with-PHP-orange)
+![PHP](https://img.shields.io/badge/PHP-Server--Side-orange)
+![JS](https://img.shields.io/badge/JavaScript-Frontend-yellow)
+![GitHub](https://img.shields.io/badge/github-danahparis21-blue?logo=github&style=social)
 
 A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and JavaScript**, featuring recurring events, drag-and-drop scheduling, real-time reminders, and email notifications. Designed to help users manage tasks and stay productive through an intuitive, personalized interface.
+
 
 ---
 
@@ -39,6 +47,7 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 ---
 
 ## 🛠️ Tech Stack
+
 
 | Tech        | Usage                        |
 |-------------|------------------------------|
