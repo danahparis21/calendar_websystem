@@ -141,57 +141,10 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 
 ## 📬 Project Members
 
-<details>
-<summary><strong>👤 Danah Paris – User Interaction & Logic</strong></summary>
-
-> 💼 **User-Side Development (Frontend + Backend)**
-
-- Sign-up / login system with database integration  
-- Calendar dashboard UI  
-- Add single & recurring events  
-- Modify, cancel, reschedule (with drag & drop)  
-- Update event status (Completed, Pending, Cancelled)  
-- Event reminder system (notifications + email via PHPMailer)  
-- Excel report generation for events  
-- In-app notifications and user feedback
-
-</details>
-
-<details>
-<summary><strong>👤 Christian Paul Mendoza – Admin Panel & Oversight</strong></summary>
-
-> 🛠️ **Admin-Side Development**
-
-- Admin dashboard  
-- Role management and access control  
-- System-wide announcements  
-- View & manage user-submitted events  
-- Implementation of audit log tracking  
-- Admin activity monitoring and reports
-
-</details>
-
-<details>
-<summary><strong>👤 Eloisa Joyce Creencia – Data Handling & Testing</strong></summary>
-
-> 🧪 **Back-End Support & QA**
-
-- Database design & normalization     
-- ERD modeling  
-- Table relationships & keys
-
-</details>
-
-<details>
-<summary><strong>👤 Theresa C. Valiente – System Design & Integration</strong></summary>
-
-> 🗃️ **System Architecture**
-
-- Functional testing of user-side features
-- System flow preparation  
-- Testing of recurring-event logic with data constraints
-
-</details>
+- Danah Paris
+- Christian Paul Mendoza
+- Eloisa Creencia
+- Theresa Valiente
 
 ---
 ## Project Documentation
