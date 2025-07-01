@@ -81,19 +81,25 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 <summary>Click to view screenshots</summary>
 
 <p align="center">
-  <img src="images/myCalendar-logo.jpg" width="300" height="250"/>
-  <img src="images/myCalendar-dashboard.png" width="300"  height="150"/>
-  <img src="images/myCalendar-dashboard2.jpg" width="300"  height="150"/>
+  <img src="images/myCalendar-logo.jpg" width="300" height="300"/>
+    <img src="images/event-details.png" width="300" height="200"/>
+
+  
 </p>
 <p align="center">
-  <img src="images/event-details.png" width="300" height="250"/>
-  <img src="images/user-notifications.png" width="300"  height="150"/>
-  <img src="images/email-notifications.png" width="300"  height="150"/>
+  <img src="images/myCalendar-dashboard2.jpg" width="400"  height="200"/>
+    <img src="images/myCalendar-dashboard.png" width="400"  height="200"/>
+
+  
 </p>
 <p align="center">
-  <img src="images/admin-dashboard.png" width="300" height="150"/>
-  <img src="images/admin-users.png" width="300"  height="150"/>
-  <img src="images/admin-events.png" width="300"  height="150"/>
+  <img src="images/user-notifications.png" width="400"  height="200"/>
+  <img src="images/email-notifications.png" width="400"  height="200"/>
+
+</p>
+<p align="center">
+   <img src="images/admin-dashboard.png" width="400" height="200"/>
+  <img src="images/admin-users.png" width="400"  height="200"/>
 </p>
 
 </details>
