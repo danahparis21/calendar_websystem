@@ -1,7 +1,8 @@
 <?php
-$servername = "localhost"; // Database host
-$username = "root"; // Your MySQL username 
-$password = ""; // Your MySQL password 
+
+$servername = "localhost"; 
+$username = "root"; 
+$password = "";
 $dbname = "calendar_system"; 
 $port = "3307";
 

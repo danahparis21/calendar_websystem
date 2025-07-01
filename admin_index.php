@@ -25,7 +25,7 @@ if (!($conn instanceof PDO)) {
     $username = "root";
     $password = "";
     $dbname = "calendar_system";
-    $port = "3307";
+    $port = "3306";
     
 
     try {
@@ -1158,7 +1158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_announcement']
         // Initialize DataTables with better pagination handling
         $('#usersTable, #eventsTable, #auditTable').DataTable({
     responsive: true,
-    pageLength: 10,
+    pageLength: 25,
     lengthMenu: [25, 50, 100],
     searching: false, // Disable the search box
     initComplete: function () {
@@ -1754,7 +1754,7 @@ $(document).on('submit', 'form[data-announcement-delete]', function(e) {
     deleteBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
     
     $.ajax({
-        url: window.location.href, // Submit to current page
+        url: window.location.href, // Submit to the current page
         method: 'POST',
         data: {
             delete_announcement: 1,
@@ -1791,6 +1791,7 @@ $(document).on('submit', 'form[data-announcement-delete]', function(e) {
         }
     });
 });
+
 function showAlert(type, message) {
     const alert = $(`
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
