@@ -29,7 +29,7 @@ if (isset($_POST['submit'])) {
                 $mail->Host = 'smtp.gmail.com';
                 $mail->SMTPAuth = true;
                 $mail->Username = 'mycalendaryo1001@gmail.com';   // Use your Gmail address
-                $mail->Password = '';   // Use the Gmail app password you created
+                $mail->Password = 'mtsi ihci vbvf vitj';   // Use the Gmail app password you created
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                 $mail->Port = 587;
 
@@ -39,10 +39,11 @@ if (isset($_POST['submit'])) {
 
                 // Content
                 $mail->isHTML(true);
-                $mail->Subject = 'Welcome to My Calendar! 💜';
+                $mail->Subject = 'Welcome to My Calendar!';
                 $mail->Body    = '<!DOCTYPE html>
-                <html>
+                <html lang="en">
                 <head>
+                    <meta charset="UTF-8">
                     <style>
                         body {
                             font-family: Arial, sans-serif;
@@ -105,19 +106,19 @@ if (isset($_POST['submit'])) {
                 </head>
                 <body>
                     <div class="email-container">
-                        <h2><span class="emoji">👋</span> Welcome to My Calendar, ' . $username . '!</h2>
+                        <h2><span class="emoji"></span> Welcome to My Calendar, <?php echo $username; ?>!</h2>
                         <p class="greeting">We\'re thrilled to have you join our community! Get ready to easily manage your schedule and stay organized.</p>
                         <p>With My Calendar, you can:</p>
                         <ul>
-                            <li>🗓️ Create and manage events with ease.</li>
-                            <li>⏰ Set up reminders so you never miss an important appointment.</li>
-                            <li>🎨 Customize your calendar with colors.</li>
+                            <li> Create and manage events with ease.</li>
+                            <li> Set up reminders so you never miss an important appointment.</li>
+                            <li> Customize your calendar with colors.</li>
                             <li>... and much more!</li>
                         </ul>
-                        <p>Ready to get started? Click the button below to access your calendar:</p>
-                        <p style="text-align: center;"><a href="YOUR_CALENDAR_URL_HERE" class="button">Go to My Calendar</a></p>
+                        <p>Ready to get started? Go to your Calendar now!</p>
+                        
                         <div class="footer">
-                            <p><span class="emoji">💜</span> Thanks for signing up!</p>
+                            <p><span class="emoji"></span> Thanks for signing up!</p>
                             <p>If you have any questions, feel free to <a href="mailto:mycalendaryo1001@gmail.com">contact us</a>.</p>
                         </div>
                     </div>

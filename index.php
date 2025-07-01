@@ -1,21 +1,18 @@
 <?php
 session_start();
 $isLoggedIn = isset($_SESSION['user_id']);
-// Use username from the proper session variable (assuming user_name is the correct one)
-// If you don't have a specific session variable for the username, you'll need to fetch it from the database
-$username = $_SESSION['username'] ?? 'Guest'; // Changed to a more standard name
+
+$username = $_SESSION['username'] ?? 'Guest'; 
 
 // Initialize task counts
 $pendingCount = 0;
 $completedCount = 0;
 
-// Only query the database if the user is logged in
 if ($isLoggedIn) {
-    include('db.php'); // Include your database connection
+    include('db.php'); 
     
     $userId = $_SESSION['user_id'];
-    
-    // Fetch the actual username from the database if it's not in session
+ 
     if ($username === 'root' || $username === 'Guest') {
         $userQuery = "SELECT username FROM users WHERE id = ?";
         $stmt = mysqli_prepare($conn, $userQuery);
@@ -24,12 +21,12 @@ if ($isLoggedIn) {
         $result = mysqli_stmt_get_result($stmt);
         if ($row = mysqli_fetch_assoc($result)) {
             $username = $row['username'];
-            // Save the correct username to session for future use
+       
             $_SESSION['username'] = $username;
         }
     }
     
-    $today = date('Y-m-d'); // Get today's date in YYYY-MM-DD format
+    $today = date('Y-m-d');
     
     // Get pending tasks count for today
     $pendingQuery = "SELECT COUNT(*) as count FROM events 
@@ -44,7 +41,7 @@ if ($isLoggedIn) {
         $pendingCount = $row['count'];
     }
     
-    // Get completed tasks count for today
+
     $completedQuery = "SELECT COUNT(*) as count FROM events 
                       WHERE status = 'completed' 
                       AND user_id = ? 
@@ -70,7 +67,6 @@ if ($isLoggedIn) {
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <!-- Pass login state to JS -->
     <script> var isLoggedIn = <?php echo json_encode($isLoggedIn); ?>; </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
@@ -80,7 +76,7 @@ if ($isLoggedIn) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <body>
     <style>
-    /* Add this to your <head> section or CSS file */
+
     .notification-badge {
     position: absolute;
     top: -5px;
@@ -330,10 +326,10 @@ document.getElementById("showNotificationsBtn").addEventListener("click", functi
     const badge = document.getElementById('notificationBadge');
     const notificationsPanel = document.getElementById('notificationsPanel');
 
-    // Toggle the visibility of the notifications panel
-    notificationsPanel.classList.toggle('show'); // Assuming you have CSS to control the 'show' class
 
-    // Hide the badge when the button is clicked (assuming the panel becomes visible)
+    notificationsPanel.classList.toggle('show');
+
+
     badge.style.display = 'none';
 
 });
@@ -344,8 +340,7 @@ function fetchNotifications() {
     const notificationsPanel = document.getElementById('notificationsPanel');
     if (!container || !badge || !notificationsPanel) return;
 
-    // If the notification panel is currently visible, we assume the user has seen the notifications,
-    // so we keep the badge hidden.
+
     if (notificationsPanel.classList.contains('show')) {
         return;
     }
@@ -383,9 +378,9 @@ function fetchNotifications() {
 
             const minsLeft = Math.round((eventTime - now) / (1000 * 60));
 
-            // Only show if reminder time is reached and event hasn't passed
+    
             if (reminderTime <= now && minsLeft > 0) {
-                // Format minsLeft into days, hours, minutes
+           
                 let days = Math.floor(minsLeft / 1440);
                 let remainingMins = minsLeft % 1440;
                 let hours = Math.floor(remainingMins / 60);
@@ -395,7 +390,7 @@ function fetchNotifications() {
                 if (days > 0) {
                     startsInText += `${days} day${days > 1 ? 's' : ''} `;
                 }
-                if (hours > 0 || days > 0) { // show hours even if days are present
+                if (hours > 0 || days > 0) { 
                     startsInText += `${hours} hour${hours > 1 ? 's' : ''} `;
                 }
                 startsInText += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
@@ -415,11 +410,11 @@ function fetchNotifications() {
             }
         });
 
-        // Show the badge only if the notification panel is NOT visible and there are new notifications
+     
         if (!notificationsPanel.classList.contains('show') && hasNewNotifications && container.children.length > 0) {
             badge.style.display = 'inline-block';
         } else if (!notificationsPanel.classList.contains('show')) {
-            badge.style.display = 'none'; // Ensure it's hidden if no new notifications and panel is closed
+            badge.style.display = 'none'; 
         }
 
         })
@@ -430,12 +425,12 @@ function fetchNotifications() {
         });
 }
 
-// Refresh every 30 seconds and on page load
+
 setInterval(fetchNotifications, 30000);
 document.addEventListener('DOMContentLoaded', fetchNotifications);
 
 function checkReminders() {
-    // Add timestamp parameter to prevent caching
+
     fetch('get_reminders.php?ts=' + new Date().getTime())
         .then(response => {
             if (!response.ok) {
@@ -449,10 +444,10 @@ function checkReminders() {
             if (reminders && reminders.length > 0) {
                 reminders.forEach(event => {
 
-                    // Check if the event is within 5 minutes from now
+           
                     const eventTime = new Date(event.start);
                     const currentTime = new Date();
-                    const timeDiff = (eventTime - currentTime) / (1000 * 60); // difference in minutes
+                    const timeDiff = (eventTime - currentTime) / (1000 * 60); 
                     
                     if (timeDiff > 0 && timeDiff <= 5) {
                         console.log('Showing notification for event:', event.title);
@@ -496,18 +491,18 @@ function showPopupReminder(event) {
         if (popup && document.body.contains(popup)) {
             popup.remove();
         }
-    }, 10000); // remove popup after 10 seconds
+    }, 10000);
 }
 
-// Check for reminders every minute
+
 setInterval(checkReminders, 60000);
 
-// Check immediately on page load too
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Page loaded, checking for reminders...');
     checkReminders();
     
-    // Also populate the notification list if it exists
+
     if (document.getElementById('notificationList')) {
         fetchNotifications();
     }
@@ -516,14 +511,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     <script>
-        // Add notification function
+   
     function showNotification(message) {
-        // Create notification element if it doesn't exist
+
         if ($('#notification').length === 0) {
             $('body').append('<div id="notification" style="display:none; position:fixed; bottom:20px; right:20px; background-color:#4CAF50; color:white; padding:15px; border-radius:5px; z-index:9999;"></div>');
         }
         
-        // Set message and display
+
         $('#notification').text(message).fadeIn(300).delay(2000).fadeOut(500);
     }
    $(document).ready(function() {
@@ -560,13 +555,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     end: end.format('YYYY-MM-DD')
                 },
                 success: function(events) {
-                    // Ensure each event has proper start/end time formatting
+       
                     events.forEach(function(event) {
-                        // Make sure allDay events are properly flagged
+                    
                         if (event.allDay) {
                             event.allDay = true;
                         } else {
-                            // Ensure start and end are moment objects with time
+                    
                             if (typeof event.start === 'string') {
                                 event.start = moment(event.start).format();
                             }
@@ -580,10 +575,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         },
         
-        // Make sure timezone is handled correctly
+ 
         timezone: 'local',
         
-        // Make sure events show in all views
+
         defaultView: 'month',
         views: {
             month: {
@@ -634,10 +629,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
         
-        // Improve performance with extended events loading
+ 
         loading: function(isLoading) {
             if (isLoading) {
-                // Show a loading indicator if you have one
+        
                 console.log("Loading events...");
             } else {
                 console.log("Events loaded.");
@@ -656,18 +651,18 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#addEventForm')[0].reset();
             
             // IMPROVED DATE HANDLING:
-            // Get the current view - needed to determine how to set default times
+         
             let view = $('#calendar').fullCalendar('getView');
             
-            // Set default times based on the view and selection
+     
             let startTime, endTime;
             
             if (view.name === 'month') {
-                // In month view, set reasonable default times (9am - 10am)
+          
                 startTime = start.clone().hour(9).minute(0);
                 endTime = start.clone().hour(10).minute(0);
             } else {
-                // In week or day view, use the exact time selection
+           
                 startTime = start.clone();
                 endTime = end.clone();
             }
@@ -676,12 +671,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const formatDatetimeLocal = function(momentDate) {
                 return momentDate.format("YYYY-MM-DD") + "T" + momentDate.format("HH:mm");
             };
-            
-            // Set the values to the form fields
+ 
             $('input[name="start"]').val(formatDatetimeLocal(startTime));
             $('input[name="end"]').val(formatDatetimeLocal(endTime));
 
-            // Set the modal to "Add Event" state
+         
             $('#modalTitle').text('Add Event');
             $('#event_id').val(''); // Clear event ID
             $('#saveButton').text('Save');
@@ -698,7 +692,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update color preview
             updateColorPreview();
             
-            // Show modal and overlay
+     
             document.getElementById("addEventModal").style.display = "block";
             document.getElementById("modalOverlay").style.display = "block";
         },
@@ -710,12 +704,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Store the full event data
+
             $('#displayEventModal').data('currentEvent', event);
             openDisplayModal(event);
         },
         
-        // ADD THIS: Handle event drag and drop
+      
         eventDrop: function(event, delta, revertFunc) {
         if (!isLoggedIn) {
             alert("Please log in to update events.");
@@ -727,7 +721,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const endStr = event.end ? event.end.format("YYYY-MM-DD HH:mm:ss") : event.start.clone().add(1, 'hour').format("YYYY-MM-DD HH:mm:ss");
 
         let eventId = event.id;
-        let updateEventData = { // Data for updating the event itself
+        let updateEventData = { 
             event_id: eventId,
             title: event.title,
             start: startStr,
@@ -760,24 +754,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Send an AJAX request to update the reminder
                 $.ajax({
-                    url: 'update_reminder.php', // New PHP file to handle reminder updates
+                    url: 'update_reminder.php', 
                     type: 'POST',
                     data: {
                         event_id: eventId,
                         reminder_time: newReminderTimeStr,
-                        time_before: reminderMinutesBefore // Optional, but good to send
+                        time_before: reminderMinutesBefore 
                     },
                     success: function(reminderResponse) {
                         console.log("Reminder updated:", reminderResponse);
-                        // Optionally show a separate notification for reminder update
+                       
                     },
                     error: function(xhr, status, error) {
                         console.error("Error updating reminder:", error);
                         alert("Error updating reminder.");
-                        // You might want to inform the user that the event moved but the reminder update failed
+                       
                     },
                     complete: function() {
-                        // Refresh the calendar after both event and reminder updates (or just event if reminder update fails)
+                      
                         $('#calendar').fullCalendar('refetchEvents');
                     }
                 });
@@ -791,7 +785,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     },
         
-        // ADD THIS: Handle event resize
+
         eventResize: function(event, delta, revertFunc) {
             if (!isLoggedIn) {
                 alert("Please log in to update events.");
@@ -799,11 +793,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Format dates as needed for the database
+
             const startStr = event.start.format("YYYY-MM-DD HH:mm:ss");
             const endStr = event.end.format("YYYY-MM-DD HH:mm:ss");
             
-            // Similar to eventDrop, send the updated data to server
+  
             let eventId = event.id;
             let updateData = {
                 event_id: eventId,
@@ -818,7 +812,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 reminder: event.reminder || '15'
             };
             
-            // Determine if this is a recurring event instance
+    
             let updateUrl = 'calendar/update_event.php';
             if (event.is_recurring && event.start.format('YYYY-MM-DD') !== event.original_start) {
                 updateUrl = 'calendar/update_instance.php';
@@ -832,7 +826,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 success: function(response) {
                     showNotification('Event updated successfully!');
                     
-                    // Refresh the calendar to ensure consistency
+                
                     $('#calendar').fullCalendar('refetchEvents');
                 },
                 error: function(xhr, status, error) {
@@ -853,7 +847,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#colorPreview').css('background-color', selectedColor);
     }
     
-    // Get status icon based on status value
+
     function getStatusIcon(status) {
         switch(status) {
             case 'pending': return '📌';
@@ -863,7 +857,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Get status badge class based on status value
+
     function getStatusBadgeClass(status) {
         switch(status) {
             case 'pending': return 'status-pending';
@@ -875,17 +869,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Open the display modal
     function openDisplayModal(event) {
-        // Populate display modal
+
         $('#eventTitle').text(event.title);
         $('#eventStart').text(event.start.format("YYYY-MM-DD HH:mm"));
         $('#eventEnd').text(event.end ? event.end.format("YYYY-MM-DD HH:mm") : 'N/A');
         
-        // Display recurring information in a more user-friendly way
+  
         let repeatText = 'Does not repeat';
         if (event.repeat_type && event.repeat_type !== 'none') {
             repeatText = event.repeat_type.charAt(0).toUpperCase() + event.repeat_type.slice(1);
             
-            // Add indication if this is a modified instance
+         
             if (event.is_exception) {
                 repeatText += ' (Modified instance)';
             }
@@ -937,7 +931,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("modalOverlay").style.display = "none";
     }
 
-    // Function to cancel an event (mark as cancelled)
+
     function cancelEvent() {
         var event = $('#displayEventModal').data('currentEvent');
         
@@ -948,12 +942,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Check if this is a recurring event
         if (event.is_recurring) {
-            // Show the recurring cancel dialog
+  
             document.getElementById("recurringCancelDialog").style.display = "block";
-            // Store event ID for later use
+ 
             $('#recurringCancelDialog').data('eventId', event.id);
         } else {
-            // Non-recurring event cancellation
+
             if (confirm("Are you sure you want to cancel this event? It will be hidden from your calendar.")) {
                 $.ajax({
                     url: 'calendar/cancel_event.php',
@@ -1005,11 +999,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Check if this is a recurring event
+ 
         if (event.is_recurring) {
-            // Show the recurring edit dialog
+
             document.getElementById("recurringEditDialog").style.display = "block";
-            // Store event for later use
+      
             $('#recurringEditDialog').data('event', event);
             return;
         }
@@ -1027,48 +1021,47 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Store the mode for form submission
+
         event.recurringEditMode = mode;
         
-        // Populate and show the edit form
+
         populateEditForm(event);
-        
-        // Close the dialog
+ 
         document.getElementById("recurringEditDialog").style.display = "none";
     }
 
     // Function to populate the edit form
 function populateEditForm(event) {
-    console.log("Original event data:", event); // Debug: log the original event object
+    console.log("Original event data:", event); 
     
     // Populate the edit form
     $('#modalTitle').text('Edit Event');
     $('input[name="title"]').val(event.title || '');
 
-    // Format dates properly for datetime-local inputs
+
     function formatDateForInput(date) {
         if (!date) return '';
         
-        console.log("Formatting date:", date); // Debug: log each date we're trying to format
+        console.log("Formatting date:", date); 
         
-        // First, ensure it's a string we can manipulate
+     
         let dateStr = date;
         
-        // If it's a moment object, convert to ISO string
+   
         if (moment.isMoment(date)) {
             dateStr = date.format();
         }
-        // If it's a Date object, convert to ISO string
+   
         else if (date instanceof Date) {
             dateStr = date.toISOString();
         }
         
-        // Explicitly replace 'P' with 'T' if it exists
+    
         if (typeof dateStr === 'string' && dateStr.includes('P')) {
             dateStr = dateStr.replace('P', 'T');
         }
         
-        // Create a new moment object from our cleaned string
+ 
         const momentDate = moment(dateStr);
         
         if (!momentDate.isValid()) {
@@ -1076,25 +1069,24 @@ function populateEditForm(event) {
             return '';
         }
         
-        // Format with explicit 'T' separator
+
         return momentDate.format("YYYY-MM-DDTHH:mm");
     }
 
-    // Debug: Check start and end dates before formatting
+
     console.log("Start date before formatting:", event.start);
     console.log("End date before formatting:", event.end);
     
-    // Process start date
+
     let formattedStart = formatDateForInput(event.start);
     console.log("Formatted start:", formattedStart); // Debug
     $('input[name="start"]').val(formattedStart);
     
-    // Process end date
+
     let formattedEnd = formatDateForInput(event.end);
     console.log("Formatted end:", formattedEnd); // Debug
     $('input[name="end"]').val(formattedEnd);
 
-    // As a fallback, directly fix the value if it still has a 'P'
     setTimeout(() => {
         const startField = $('input[name="start"]');
         if (startField.val().includes('P')) {
@@ -1120,7 +1112,6 @@ function populateEditForm(event) {
     // Update color preview for the edit form
     updateColorPreview();
 
-    // Switch modals
     closeDisplayModal();
     document.getElementById("addEventModal").style.display = "block";
     document.getElementById("modalOverlay").style.display = "block";
@@ -1147,24 +1138,22 @@ $('#showNotificationsBtn').on('click', function() {
 });
 
 
-   // Handle form submission for adding/updating event
 $('#addEventForm').on('submit', function(e) {
     e.preventDefault();
     var formData = $(this).serialize();
     var eventId = $('#event_id').val();
     
-    // Check if we have a stored recurring edit mode
+
     var event = $('#displayEventModal').data('currentEvent');
     var recurringEditMode = event && event.recurringEditMode;
-    
-    // Debug: Log what we're about to send
+
     console.log("Submitting form with ID:", eventId);
     console.log("Update mode:", recurringEditMode || 'this');
     console.log("Form data:", formData);
     
-    // If this is a recurring event edit
+
     if (eventId && eventId.indexOf(':') !== -1) {
-        // Add update mode to form data
+      
         formData += '&update_mode=' + (recurringEditMode || 'this');
         
         $.ajax({
@@ -1182,7 +1171,7 @@ $('#addEventForm').on('submit', function(e) {
                 console.error("AJAX Error:", status, error);
                 console.error("Server response:", xhr.responseText);
                 
-                // Display the actual error message if available
+                
                 if (xhr.responseText) {
                     alert("Server error: " + xhr.responseText);
                 } else {
@@ -1191,7 +1180,7 @@ $('#addEventForm').on('submit', function(e) {
             }
         });
     } else {
-        // Regular add/update
+     
         var url = eventId ? 'calendar/update_event.php' : 'calendar/add_event.php';
         
         $.ajax({
