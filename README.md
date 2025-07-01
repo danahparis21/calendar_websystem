@@ -14,6 +14,7 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 - [📊 ERD & Flowchart](#-erd--flowchart)
 - [🧪 How to Run](#-how-to-run)
 - [📬 Project Members](#-credits)
+- [📄 Project Documentation](#project-documentation)
 - [📄 License](#-license)
 
 ---
@@ -176,6 +177,10 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 - Testing of recurring-event logic with data constraints
 
 </details>
+
+---
+## Project Documentation
+For more info,[📄 View the Full Documentation (PDF)](myCalendar-documentation.pdf) and [📖User Manual](User-Manual.pdf)! 
 
 ## 📄 License
 
