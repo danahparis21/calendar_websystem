@@ -1,0 +1,184 @@
+# 🗓️ myCalendar – Web-Based Scheduling System
+
+A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and JavaScript**, featuring recurring events, drag-and-drop scheduling, real-time reminders, and email notifications. Designed to help users manage tasks and stay productive through an intuitive, personalized interface.
+
+---
+
+## 📑 Table of Contents
+
+- [🧠 Overview](#-overview)
+- [🎯 Objectives](#-objectives)
+- [🛠️ Tech Stack](#-tech-stack)
+- [🗂️ System Features](#-system-features)
+- [📸 Screenshots](#-screenshots)
+- [📊 ERD & Flowchart](#-erd--flowchart)
+- [🧪 How to Run](#-how-to-run)
+- [📬 Project Members](#-credits)
+- [📄 License](#-license)
+
+---
+
+## 🧠 Overview
+
+**myCalendar** is a simple yet powerful calendar platform built for scheduling personal tasks and events. It features role-based access (Admin & User), recurring events, reminders via email/system notifications, and status tracking — all accessible from an intuitive calendar dashboard.
+
+---
+
+## 🎯 Objectives
+
+- Provide a user-friendly calendar interface for event creation and tracking  
+- Allow **color-coded** event customization for clarity  
+- Support **recurring event logic** (edit/cancel all or just one)  
+- Enable full control: drag to reschedule, update status, delete  
+- Send **custom reminders** and notifications via system + email  
+- Deliver **extra alerts** for events with 5-minute reminders  
+- Admin: monitor events, post announcements, manage user roles  
+- Maintain accountability through audit logs and activity tracking  
+
+---
+
+## 🛠️ Tech Stack
+
+| Tech        | Usage                        |
+|-------------|------------------------------|
+| PHP         | Server-side scripting         |
+| MySQL       | Database                      |
+| HTML/CSS    | Frontend structure & styles   |
+| JavaScript  | Client-side logic, interactivity |
+| PHPMailer   | Email reminders               |
+| Bootstrap   | UI styling                    |
+
+## 🗂️ System Features
+
+### 👤 User Side
+
+- 🔐 Register & login securely  
+- 📆 Create single or recurring events  
+- 🖌️ Customize event color, time, and description  
+- 🔁 Edit recurring events (this instance or all)  
+- 🔔 Set reminders (custom or 5-mins before event)  
+- ✉️ Email + in-app notifications  
+- 📝 Status tracking (Completed, Pending, Cancelled)  
+- 📤 Export events to Excel  
+- 🧲 Drag-and-drop calendar editing
+
+---
+
+### 🛠️ Admin Side
+
+- 👥 Manage user roles  
+- 📢 Post announcements  
+- 👁️ View user events  
+- 📚 Access audit logs  
+- 🔒 Monitor changes & actions for accountability
+
+---
+
+## 📸 Screenshots
+
+<details>
+<summary>Click to view screenshots</summary>
+
+<p align="center">
+  <img src="images/myCalendar-logo.jpg" width="300" height="250"/>
+  <img src="images/myCalendar-dashboard.png" width="300"  height="150"/>
+  <img src="images/myCalendar-dashboard2.jpg" width="300"  height="150"/>
+</p>
+<p align="center">
+  <img src="images/event-details.png" width="300" height="250"/>
+  <img src="images/user-notifications.png" width="300"  height="150"/>
+  <img src="images/email-notifications.png" width="300"  height="150"/>
+</p>
+<p align="center">
+  <img src="images/admin-dashboard.png" width="300" height="150"/>
+  <img src="images/admin-users.png" width="300"  height="150"/>
+  <img src="images/admin-events.png" width="300"  height="150"/>
+</p>
+
+</details>
+
+---
+
+## 📊 ERD & Flowchart
+
+<details>
+<summary>Click to view ERD & System Flow</summary>
+
+<br>
+
+![ERD](images/erd.png)
+![System Flowchart](images/flowchart.jpg)
+
+</details>
+
+---
+
+## 🧪 How to Run
+
+1. Clone or download this repository  
+2. Import the SQL file into your MySQL server  
+3. Update database connection settings in `db_connect.php`  
+4. Open the project in XAMPP / MAMP or any local server  
+5. Navigate to `localhost/myCalendar`
+
+---
+
+## 📬 Project Members
+
+<details>
+<summary><strong>👤 Danah Paris – User Interaction & Logic</strong></summary>
+
+> 💼 **User-Side Development (Frontend + Backend)**
+
+- Sign-up / login system with database integration  
+- Calendar dashboard UI  
+- Add single & recurring events  
+- Modify, cancel, reschedule (with drag & drop)  
+- Update event status (Completed, Pending, Cancelled)  
+- Event reminder system (notifications + email via PHPMailer)  
+- Excel report generation for events  
+- In-app notifications and user feedback
+
+</details>
+
+<details>
+<summary><strong>👤 Christian Paul Mendoza – Admin Panel & Oversight</strong></summary>
+
+> 🛠️ **Admin-Side Development**
+
+- Admin dashboard  
+- Role management and access control  
+- System-wide announcements  
+- View & manage user-submitted events  
+- Implementation of audit log tracking  
+- Admin activity monitoring and reports
+
+</details>
+
+<details>
+<summary><strong>👤 Eloisa Joyce Creencia – Data Handling & Testing</strong></summary>
+
+> 🧪 **Back-End Support & QA**
+
+- Database design & normalization     
+- ERD modeling  
+- Table relationships & keys
+
+</details>
+
+<details>
+<summary><strong>👤 Theresa C. Valiente – System Design & Integration</strong></summary>
+
+> 🗃️ **System Architecture**
+
+- Functional testing of user-side features
+- System flow preparation  
+- Testing of recurring-event logic with data constraints
+
+</details>
+
+## 📄 License
+
+This project is built for educational purposes.  
+You're welcome to explore or modify — just give credit where it's due.
+
