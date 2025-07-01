@@ -6,7 +6,7 @@ date_default_timezone_set('Asia/Manila');
 $now = new DateTime();
 $nowFormatted = $now->format('Y-m-d H:i:s');
 
-echo "Script started at: " . $nowFormatted . "<br>";  // Add for debugging
+echo "Script started at: " . $nowFormatted . "<br>";  
 echo "Current time is: " . $now->format('Y-m-d H:i:s') . "<br>";
 
 
@@ -14,9 +14,9 @@ include('db.php');
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-require 'vendor/autoload.php';  // Ensure that this points to the correct location
+require 'vendor/autoload.php';  
 
-// This part of your original code generates new reminders
+
 $sql = <<<SQL
 INSERT INTO reminders (event_id, method, time_before, created_at, shown, reminder_time)
 SELECT
@@ -46,7 +46,7 @@ if ($conn->query($sql) === TRUE) {
 // ** This is the new code that sends emails based on the generated reminders  *****
 // ***********************************************************************************
 
-// Check for reminders that are due to be sent
+
 $now = new DateTime();
 $future = new DateTime();
 $future->modify('+5 minutes');
@@ -73,18 +73,18 @@ if ($result->num_rows > 0) {
 
 
         try {
-            //Server settings - Use your existing PHPMailer configuration
+        
             $mail->isSMTP();
             $mail->Host = 'smtp.gmail.com';  // Replace with your SMTP server if different
             $mail->SMTPAuth = true;
-            $mail->Username = 'mycalendaryo1001@gmail.com';    // Replace with your Gmail address
-            $mail->Password = 'mtsi ihci vbvf vitj';      // Replace with your Gmail app password
+            $mail->Username = 'mycalendaryo1001@gmail.com';    
+            $mail->Password = '';     
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = 587;
 
             //Recipients
-            $mail->setFrom('mycalendaryo1001@gmail.com', 'My Calendar Reminders');  // Replace with your email and name
-            $mail->addAddress($row["user_email"], ''); // Use the user's email from the database
+            $mail->setFrom('mycalendaryo1001@gmail.com', 'My Calendar Reminders'); 
+            $mail->addAddress($row["user_email"], '');
 //Content
 $mail->isHTML(true);
 $mail->Subject = 'Reminder: ' . $row["event_title"];
@@ -187,7 +187,7 @@ $mail->Body    = '<!DOCTYPE html>
         }
     }
 } else {
-    echo "No reminders to send.<br>"; // Added <br> for better formatting in the browser
+    echo "No reminders to send.<br>"; 
 }
 
 $stmt->close();

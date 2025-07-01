@@ -3,16 +3,14 @@ session_start();
 header('Content-Type: application/json');
 include('db.php');
 
-// TEMP: Override session user_id (replace/remove in production)
-//$_SESSION['user_id'] = 1; // your actual user_id
-// ✅ Use the session user_id as-is
+
 $user_id = $_SESSION['user_id'] ?? null;
 
 if (!$user_id) {
     echo json_encode(['error' => 'Not logged in']);
     exit;
 }
-// NEW simplified query: just fetch all reminders for this user
+
 $query = "
     SELECT 
         r.id as reminder_id,
