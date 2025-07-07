@@ -129,24 +129,6 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 
 ---
 
-## How to Run
-
-1. Clone or download this repository  
-2. Import the SQL file into your MySQL server  
-3. Update database connection settings in `db_connect.php`  
-4. Open the project in XAMPP / MAMP or any local server  
-5. Navigate to `localhost/myCalendar`
-
----
-
-## Project Members
-
-- Danah Paris
-- Christian Paul Mendoza
-- Eloisa Creencia
-- Theresa Valiente
-
----
 ## Project Documentation
 For more info,[📄 View the Full Documentation (PDF)](myCalendar-documentation.pdf) and [📖User Manual](User-Manual.pdf)! 
 
