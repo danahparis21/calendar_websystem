@@ -1,5 +1,5 @@
 
-# 🗓️ myCalendar – Web-Based Scheduling System
+# myCalendar – Web-Based Scheduling System
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Made With](https://img.shields.io/badge/Made%20with-PHP-orange)
@@ -12,28 +12,28 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
-- [🧠 Overview](#-overview)
-- [🎯 Objectives](#-objectives)
-- [🛠️ Tech Stack](#-tech-stack)
-- [🗂️ System Features](#-system-features)
-- [📸 Screenshots](#-screenshots)
-- [📊 ERD & Flowchart](#-erd--flowchart)
-- [🧪 How to Run](#-how-to-run)
-- [📬 Project Members](#-credits)
-- [📄 Project Documentation](#project-documentation)
-- [📄 License](#-license)
+- [Overview](#-overview)
+- [Objectives](#-objectives)
+- [Tech Stack](#-tech-stack)
+- [System Features](#-system-features)
+- [Screenshots](#-screenshots)
+- [ERD & Flowchart](#-erd--flowchart)
+- [How to Run](#-how-to-run)
+- [Project Members](#-credits)
+- [Project Documentation](#project-documentation)
+- [License](#-license)
 
 ---
 
-## 🧠 Overview
+## Overview
 
 **myCalendar** is a simple yet powerful calendar platform built for scheduling personal tasks and events. It features role-based access (Admin & User), recurring events, reminders via email/system notifications, and status tracking — all accessible from an intuitive calendar dashboard.
 
 ---
 
-## 🎯 Objectives
+## Objectives
 
 - Provide a user-friendly calendar interface for event creation and tracking  
 - Allow **color-coded** event customization for clarity  
@@ -46,7 +46,7 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 
 | Tech        | Usage                        |
@@ -58,33 +58,33 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 | PHPMailer   | Email reminders               |
 | Bootstrap   | UI styling                    |
 
-## 🗂️ System Features
+## System Features
 
-### 👤 User Side
+### User Side
 
-- 🔐 Register & login securely  
-- 📆 Create single or recurring events  
-- 🖌️ Customize event color, time, and description  
-- 🔁 Edit recurring events (this instance or all)  
-- 🔔 Set reminders (custom or 5-mins before event)  
-- ✉️ Email + in-app notifications  
-- 📝 Status tracking (Completed, Pending, Cancelled)  
-- 📤 Export events to Excel  
-- 🧲 Drag-and-drop calendar editing
-
----
-
-### 🛠️ Admin Side
-
-- 👥 Manage user roles  
-- 📢 Post announcements  
-- 👁️ View user events  
-- 📚 Access audit logs  
-- 🔒 Monitor changes & actions for accountability
+- Register & login securely  
+- Create single or recurring events  
+- Customize event color, time, and description  
+- Edit recurring events (this instance or all)  
+- Set reminders (custom or 5-mins before event)  
+- Email + in-app notifications  
+- Status tracking (Completed, Pending, Cancelled)  
+- Export events to Excel  
+- Drag-and-drop calendar editing
 
 ---
 
-## 📸 Screenshots
+### Admin Side
+
+- Manage user roles  
+- Post announcements  
+- View user events  
+- Access audit logs  
+- Monitor changes & actions for accountability
+
+---
+
+## Screenshots
 
 <details>
 <summary>Click to view screenshots</summary>
@@ -115,7 +115,7 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 
 ---
 
-## 📊 ERD & Flowchart
+## ERD & Flowchart
 
 <details>
 <summary>Click to view ERD & System Flow</summary>
@@ -129,7 +129,7 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 
 ---
 
-## 🧪 How to Run
+## How to Run
 
 1. Clone or download this repository  
 2. Import the SQL file into your MySQL server  
@@ -139,7 +139,7 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 
 ---
 
-## 📬 Project Members
+## Project Members
 
 - Danah Paris
 - Christian Paul Mendoza
@@ -150,7 +150,7 @@ A powerful, flexible calendar and event manager built with **PHP, HTML, CSS, and
 ## Project Documentation
 For more info,[📄 View the Full Documentation (PDF)](myCalendar-documentation.pdf) and [📖User Manual](User-Manual.pdf)! 
 
-## 📄 License
+## License
 
 This project is built for educational purposes.  
 You're welcome to explore or modify — just give credit where it's due.
